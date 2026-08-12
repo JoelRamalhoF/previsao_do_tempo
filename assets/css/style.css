@@ -66,6 +66,48 @@ header h1 {
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-group button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.input-group button:active {
+    transform: translateY(0);
+}
+
+.temperature {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 30px;
+}
+
+#weather-icon {
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+}
+
+.temp-values {
+    display: flex;
+    align-items: flex-start;
+}
+
+.temp-values span:first-child {
+    font-size: 72px;
+    font-weight: 700;
+    color: #667eea;
+    line-height: 1;
+}
+
+.temp-unit {
+    font-size: 24px;
+    color: #666;
+    margin-top: 10px;
 }
 
 .weather-result {
@@ -82,26 +124,6 @@ header h1 {
     font-weight: 600;
 }
 
-.temperature {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    margin-bottom: 30px;
-}
-
-.temperature span:first-child {
-    font-size: 72px;
-    font-weight: 700;
-    color: #667eea;
-    line-height: 1;
-}
-
-.temp-unit {
-    font-size: 24px;
-    color: #666;
-    margin-top: 10px;
-}
-
 .weather-info {
     text-align: left;
     background: white;
@@ -115,6 +137,10 @@ header h1 {
     font-size: 14px;
     margin-bottom: 10px;
     line-height: 1.6;
+}
+
+.weather-info p:last-child {
+    margin-bottom: 0;
 }
 
 .weather-info strong {
@@ -155,7 +181,12 @@ header h1 {
         width: 100%;
     }
 
-    .temperature span:first-child {
+    #weather-icon {
+        width: 56px;
+        height: 56px;
+    }
+
+    .temp-values span:first-child {
         font-size: 56px;
     }
 

@@ -1,0 +1,23 @@
+{
+  "name": "previsao_do_tempo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JoelRamalhoF/previsao_do_tempo.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JoelRamalhoF/previsao_do_tempo/issues"
+  },
+  "homepage": "https://github.com/JoelRamalhoF/previsao_do_tempo#readme",
+  "devDependencies": {
+    "jest": "^30.4.2"
+  }
+}
