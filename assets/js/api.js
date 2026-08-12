@@ -1,4 +1,26 @@
-// Função para obter coordenadas da cidade (API de geocodificação Open-Meteo)
+/**
+ * @fileoverview Funções principais do aplicativo de previsão do tempo.
+ * Responsável por:
+ * - Buscar coordenadas de cidades na API de geocodificação Open-Meteo
+ * - Obter dados meteorológicos atuais pela API de previsão Open-Meteo
+ * - Mapear códigos de tempo (weathercode) para ícones SVG
+ * - Integrar os dados com a interface HTML do projeto
+ */
+
+/**
+ * Busca coordenadas (latitude, longitude, timezone) de uma cidade
+ * utilizando a API de geocodificação da Open-Meteo.
+ *
+ * @async
+ * @param {string} cityName - Nome da cidade a ser pesquisada (em qualquer idioma).
+ * @returns {Promise<Object|null>} Objeto com dados da cidade (name, latitude, longitude, timezone),
+ *          ou null caso não encontre resultados ou ocorra erro na requisição.
+ * @throws {Error} Pode lançar erro interno se o response.ok for falso, tratado internamente no catch.
+ *
+ * @example
+ * const saoPaulo = await getCityCoordinates('São Paulo');
+ * // saoPaulo.latitude -> -23.55
+ */
 async function getCityCoordinates(cityName) {
     const geocodingUrl =
         `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1&language=pt&format=json`;
@@ -17,7 +39,22 @@ async function getCityCoordinates(cityName) {
     }
 }
 
-// Função para obter dados meteorológicos (API Open-Meteo)
+/**
+ * Obtém dados meteorológicos atuais para uma latitude/longitude específica,
+ * utilizando a API de previsão da Open-Meteo.
+ *
+ * @async
+ * @param {number} latitude - Latitude da localização.
+ * @param {number} longitude - Longitude da localização.
+ * @param {string} [timezone='auto'] - Timezone IANA (ex.: "America/Sao_Paulo").
+ * @returns {Promise<Object|null>} Objeto JSON retornado pela API da Open-Meteo,
+ *          ou null em caso de falha na requisição ou exceção de rede.
+ * @throws {Error} Pode lançar erro interno se o response.ok for falso, tratado internamente no catch.
+ *
+ * @example
+ * const weather = await getWeatherData(-23.55, -46.63, 'America/Sao_Paulo');
+ * // weather.current_weather.temperature -> 25.0
+ */
 async function getWeatherData(latitude, longitude, timezone) {
     const weatherUrl =
         `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&timezone=${encodeURIComponent(timezone || 'auto')}`;
@@ -33,7 +70,18 @@ async function getWeatherData(latitude, longitude, timezone) {
     }
 }
 
-// Escolhe o SVG com base no weathercode + dia/noite
+/**
+ * Retorna o nome do arquivo SVG do ícone apropriado com base no código de tempo
+ * (weathercode) da Open-Meteo e se é dia ou noite na localização.
+ *
+ * @param {number} weatherCode - Código de tempo retornado pela API (padrão WMO).
+ * @param {boolean} isDay - Indica se é dia (true) ou noite (false) na localização.
+ * @returns {string} Nome do arquivo SVG correspondente dentro de assets/weather-icons/svg.
+ *
+ * @example
+ * const iconFile = getIconByWeatherCode(0, true);
+ * // iconFile -> "wi-day-sunny.svg"
+ */
 function getIconByWeatherCode(weatherCode, isDay) {
     const code = Number(weatherCode);
 
@@ -55,9 +103,18 @@ function getIconByWeatherCode(weatherCode, isDay) {
     return 'wi-na.svg';
 }
 
-// Atualiza o <img> do ícone
+/**
+ * Atualiza o elemento de imagem do ícone de clima na interface,
+ * alterando o atributo src para o arquivo SVG informado.
+ *
+ * @param {string} iconFileName - Nome do arquivo SVG (ex.: "wi-day-sunny.svg").
+ * @returns {void}
+ *
+ * @example
+ * setWeatherIcon('wi-night-clear.svg');
+ */
 function setWeatherIcon(iconFileName) {
-    if (typeof document === 'undefined') return; // segurança para Jest
+    if (typeof document === 'undefined') return; // segurança para Jest / Node
 
     const iconElement = document.getElementById('weather-icon');
     if (!iconElement) return;
@@ -66,7 +123,23 @@ function setWeatherIcon(iconFileName) {
     iconElement.alt = iconFileName.replace('.svg', '');
 }
 
-// Função principal que consulta coordenadas + clima
+/**
+ * Função de alto nível que integra geocodificação e previsão:
+ * - Busca coordenadas da cidade
+ * - Busca dados de clima para essas coordenadas
+ * - Retorna um objeto consolidado para uso no front-end
+ *
+ * @async
+ * @param {string} cityName - Nome da cidade digitado pelo usuário.
+ * @returns {Promise<Object>} Objeto com dados consolidados ou um objeto { error: string }
+ *          em caso de erro ou cidade não encontrada.
+ *
+ * @example
+ * const result = await getWeatherByCity('Lisboa');
+ * if (!result.error) {
+ *   console.log(result.temperature);
+ * }
+ */
 async function getWeatherByCity(cityName) {
     const coordinates = await getCityCoordinates(cityName);
 
@@ -96,7 +169,14 @@ async function getWeatherByCity(cityName) {
     };
 }
 
-// Atualiza a interface (DOM)
+/**
+ * Atualiza a interface HTML com os dados retornados por getWeatherByCity.
+ * Esconde/mostra mensagens de erro e altera o ícone de clima.
+ *
+ * @param {Object} data - Objeto retornado por getWeatherByCity.
+ * @param {string} [data.error] - Mensagem de erro, quando presente.
+ * @returns {void}
+ */
 function updateUI(data) {
     if (typeof document === 'undefined') return; // segurança para Jest
 
@@ -124,11 +204,11 @@ function updateUI(data) {
     const iconFile = getIconByWeatherCode(data.weatherCode, data.isDay);
     setWeatherIcon(iconFile);
 
-    weatherResult.classList.remove('hidden');
-    errorMessage.classList.add('hidden');
+    if (weatherResult) weatherResult.classList.remove('hidden');
+    if (errorMessage) errorMessage.classList.add('hidden');
 }
 
-// Listener do formulário – só no navegador
+// Listener do formulário – apenas no navegador
 if (typeof document !== 'undefined') {
     document.addEventListener('DOMContentLoaded', () => {
         const form = document.getElementById('weather-form');
