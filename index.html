@@ -15,10 +15,10 @@
         <main>
             <form id="weather-form">
                 <div class="input-group">
-                    <input 
-                        type="text" 
-                        id="city-input" 
-                        placeholder="Digite o nome da cidade" 
+                    <input
+                        type="text"
+                        id="city-input"
+                        placeholder="Digite o nome da cidade"
                         required
                     >
                     <button type="submit">Buscar</button>
@@ -27,14 +27,24 @@
 
             <div id="weather-result" class="weather-result hidden">
                 <h2 id="city-name"></h2>
+
                 <div class="temperature">
-                    <span id="temp-value"></span>
-                    <span class="temp-unit">°C</span>
+                    <img
+                        id="weather-icon"
+                        src="assets/weather-icons/svg/wi-na.svg"
+                        alt="Ícone do clima"
+                    >
+                    <div class="temp-values">
+                        <span id="temp-value"></span>
+                        <span class="temp-unit">°C</span>
+                    </div>
                 </div>
+
                 <div class="weather-info">
                     <p><strong>Vento:</strong> <span id="wind-speed"></span> km/h</p>
                     <p><strong>Direção do vento:</strong> <span id="wind-direction"></span>°</p>
                     <p><strong>Código do tempo:</strong> <span id="weather-code"></span></p>
+                    <p><strong>Período:</strong> <span id="day-period"></span></p>
                     <p><strong>Data/hora:</strong> <span id="weather-time"></span></p>
                 </div>
             </div>
