@@ -829,6 +829,9 @@ function updateUI(data) {
         return;
     }
 
+    // NOVA LINHA: Salva os dados na memória do navegador para a troca de idiomas
+    window.lastWeatherData = data;
+
     errorMessage.classList.add('hidden');
     renderCurrentWeather(data);
     renderForecast(data.daily);
@@ -1153,10 +1156,10 @@ if (typeof document !== 'undefined') {
                 const lang = btn.dataset.lang;
                 if (lang) {
                     applyTranslations(lang);
-                    // Força a recarga da pesquisa atual para traduzir os dias da semana no HTML
-                    const currentCityInput = document.getElementById('city-input');
-                    if (currentCityInput && currentCityInput.value.trim() !== '') {
-                        document.querySelector('#weather-form button[type="submit"]').click();
+                    
+                    // Em vez de simular o clique, re-renderiza a tela instantaneamente com os dados salvos na memória
+                    if (window.lastWeatherData) {
+                        updateUI(window.lastWeatherData);
                     }
                 }
             });
