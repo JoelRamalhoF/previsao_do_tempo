@@ -1047,26 +1047,91 @@ if (typeof document !== 'undefined') {
         // --- FORMULÁRIO 1: BUSCA PRINCIPAL ---
         const form = document.getElementById('weather-form');
         const cityInput = document.getElementById('city-input');
+        const optionsList = document.getElementById('city-options-list');
 
-        if (form && cityInput) {
+        if (form && cityInput && optionsList) {
             form.addEventListener('submit', async (event) => {
                 event.preventDefault();
-                event.stopPropagation(); // Impede conflitos com outros botões
+                event.stopPropagation();
 
                 const cityName = cityInput.value.trim();
-                if (!cityName) {
-                    alert(
-                        currentLang === 'en'
-                            ? 'Please enter a city name for the forecast'
-                            : currentLang === 'es'
-                                ? 'Por favor, escribe el nombre de la ciudad principal'
-                                : 'Por favor, digite o nome da cidade na busca principal'
-                    );
-                    return;
-                }
+                if (!cityName) return;
 
-                const weatherData = await getWeatherByCity(cityName);
-                updateUI(weatherData);
+                // 1. Busca até 5 opções de cidades na API usando o idioma atual
+                const langCode = currentLang.split('-')[0];
+                const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=5&language=${langCode}&format=json`;
+                
+                try {
+                    const res = await fetch(url);
+                    const data = await res.json();
+                    
+                    if (!data.results || data.results.length === 0) {
+                        updateUI({ error: 'Cidade não encontrada' });
+                        return;
+                    }
+
+                    // 2. Limpa a lista e mostra na tela
+                    optionsList.innerHTML = '';
+                    optionsList.classList.remove('hidden');
+
+                    // 3. Preenche a lista com as opções para o usuário clicar
+                    data.results.forEach(cityObj => {
+                        const li = document.createElement('li');
+                        li.style.cssText = "padding: 12px 16px; cursor: pointer; border-bottom: 1px solid rgba(148, 163, 184, 0.1); color: var(--text-primary); font-size: 14px; transition: background 0.2s;";
+                        li.onmouseover = () => li.style.background = "var(--accent-soft)";
+                        li.onmouseout = () => li.style.background = "transparent";
+                        
+                        // Formata o nome (ex: Tóquio, Tokyo, Japão)
+                        const region = cityObj.admin1 ? cityObj.admin1 + ', ' : '';
+                        const country = cityObj.country || '';
+                        li.textContent = `${cityObj.name} (${region}${country})`;
+                        
+                        // 4. Quando clicar na opção certa, busca o clima dela
+                        li.addEventListener('click', async () => {
+                            optionsList.classList.add('hidden'); // esconde a lista
+                            cityInput.value = cityObj.name; // atualiza o input
+                            
+                            // Puxa os dados exatos da coordenada escolhida
+                            const weatherData = await getWeatherData(cityObj.latitude, cityObj.longitude, cityObj.timezone);
+                            
+                            if (!weatherData) {
+                                updateUI({ error: 'Erro ao obter dados do tempo' });
+                                return;
+                            }
+
+                            // Atualiza a tela
+                            updateUI({
+                                city: `${cityObj.name}, ${country}`,
+                                latitude: weatherData.latitude,
+                                longitude: weatherData.longitude,
+                                timezone: weatherData.timezone,
+                                current: {
+                                    temperature: weatherData.current_weather.temperature,
+                                    windSpeed: weatherData.current_weather.windspeed,
+                                    windDirection: weatherData.current_weather.winddirection,
+                                    weatherCode: weatherData.current_weather.weathercode,
+                                    isDay: weatherData.current_weather.is_day === 1,
+                                    time: weatherData.current_weather.time,
+                                    humidity: weatherData.daily.relative_humidity_2m_max?.[0] ?? null,
+                                    precipitation: weatherData.daily.precipitation_sum?.[0] ?? 0
+                                },
+                                daily: weatherData.daily
+                            });
+                        });
+                        
+                        optionsList.appendChild(li);
+                    });
+
+                } catch (e) {
+                    updateUI({ error: 'Erro de conexão' });
+                }
+            });
+
+            // Esconde a lista suspensa se o usuário clicar fora dela
+            document.addEventListener('click', (e) => {
+                if (!form.contains(e.target)) {
+                    optionsList.classList.add('hidden');
+                }
             });
         }
 

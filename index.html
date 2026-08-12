@@ -14,24 +14,24 @@
         <div class="welcome-modal">
             <!-- Botão X correto controlado pelo CSS -->
             <button id="welcome-close" type="button" aria-label="Fechar"
-    style="position: absolute; top: 5px; right: 5px; z-index: 2147483647; cursor: pointer; background: transparent; border: none; font-size: 24px; color: #6c7a89; padding: 15px;"
-    onclick="document.getElementById('welcome-overlay').style.display = 'none'; localStorage.setItem('clima_welcome_seen', '1');">
-    ✕
-</button>
-            
+                style="position: absolute; top: 5px; right: 5px; z-index: 2147483647; cursor: pointer; background: transparent; border: none; font-size: 24px; color: #6c7a89; padding: 15px;"
+                onclick="document.getElementById('welcome-overlay').style.display = 'none'; localStorage.setItem('clima_welcome_seen', '1');">
+                ✕
+            </button>
+
             <h2 class="welcome-title" data-i18n="welcome.title">Bem-vindo!</h2>
-            
+
             <p class="welcome-text" data-i18n="welcome.message">
                 Obrigado por visitar este projeto de previsão do tempo.
                 Navegue pela previsão, compare cidades e, se quiser me conhecer melhor,
                 acesse meu portfólio para ver outros projetos.
             </p>
-            
+
             <!-- Link do portfólio mantido comentado conforme o seu código original -->
             <a class="welcome-cta" href="https://joelramalhof.github.io/portfolio/" target="_blank" rel="noreferrer"
                 data-i18n="welcome.cta">
                 Conheça meu portfólio
-            </a> 
+            </a>
         </div>
     </div>
 
@@ -48,22 +48,21 @@
             <button class="lang-btn" data-lang="en" title="English">🇺🇸</button>
             <button class="lang-btn" data-lang="es" title="Español">🇪🇸</button>
             <button class="lang-btn" data-lang="it" title="Italiano">🇮🇹</button>
-            <button class="lang-btn" data-lang="fr" title="Français">🇫🇷</button>
-            <button class="lang-btn" data-lang="de" title="Deutsch">🇩🇪</button>
-            <button class="lang-btn" data-lang="ru" title="Русский">🇷🇺</button>
-            <button class="lang-btn" data-lang="ja" title="日本語">🇯🇵</button>
-            <button class="lang-btn" data-lang="ko" title="한국어">🇰🇷</button>
-            <button class="lang-btn" data-lang="zh" title="中文">🇨🇳</button>
         </nav>
 
         <main class="app-main">
             <!-- Busca -->
             <section class="search-section">
                 <form id="weather-form" class="search-form">
-                    <div class="input-wrapper">
+                    <div class="input-wrapper" style="position: relative;">
                         <input type="text" id="city-input" class="search-input"
                             data-i18n-placeholder="search.placeholder"
-                            placeholder="Digite o nome da cidade (ex.: São Paulo, Lisboa, Tóquio)" required>
+                            placeholder="Digite o nome da cidade (ex.: São Paulo, Lisboa, Tóquio)" required
+                            autocomplete="off">
+                        <!-- Lista suspensa para confirmar a cidade -->
+                        <ul id="city-options-list" class="hidden"
+                            style="position: absolute; top: 100%; left: 0; width: 100%; background: var(--card-bg); border-radius: 12px; box-shadow: 0 10px 25px rgba(15, 23, 42, 0.2); z-index: 1000; list-style: none; padding: 0; margin-top: 8px; max-height: 220px; overflow-y: auto; border: 1px solid rgba(148, 163, 184, 0.2);">
+                        </ul>
                     </div>
                     <button type="submit" class="btn btn-primary" data-i18n="search.button">
                         Buscar previsão

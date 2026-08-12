@@ -69,6 +69,23 @@ describe('Função getCityCoordinates', () => {
         const result = await getCityCoordinates('São Paulo');
         expect(result).toBeNull();
     });
+
+    test('Verifica se a requisição de coordenadas inclui o parâmetro de idioma dinâmico', async () => {
+        const fakeResponse = { results: [] };
+
+        fetch.mockResolvedValueOnce({
+            ok: true,
+            json: async () => fakeResponse
+        });
+
+        await getCityCoordinates('Tóquio');
+
+        // Pega a URL exata que foi passada para o fetch
+        const chamadaDaUrl = fetch.mock.calls[0][0];
+
+        // Verifica se a URL contém o parâmetro 'language=pt' (já que currentLang padrão é pt-BR)
+        expect(chamadaDaUrl).toContain('language=pt');
+    });
 });
 
 describe('Função getWeatherData', () => {
