@@ -5,36 +5,327 @@
  * - Mapeamento de códigos de tempo para ícones e descrições
  * - Atualização dinâmica da interface, cores e mensagens
  * - Comparação de até 3 cidades
+ * - Suporte a múltiplos idiomas (i18n) + balão de boas-vindas
  */
 
 const FORECAST_DAYS = 7;
 
 /**
- * Converte um código weathercode da Open-Meteo em um rótulo e categoria.
+ * Dicionário de traduções por idioma.
+ * (Completo para pt-BR, en, es, it. Os demais ainda usam texto base.)
+ * @type {Object<string, Object<string, string>>}
+ */
+const TRANSLATIONS = {
+    'pt-BR': {
+        'app.title': 'Previsão do Tempo',
+        'app.subtitle': 'Clima atual e previsão para os próximos 7 dias',
+        'search.placeholder': 'Digite o nome da cidade (ex.: São Paulo, Lisboa, Tóquio)',
+        'search.button': 'Buscar previsão',
+        'error.cityNotFound': 'Cidade não encontrado. Tente novamente.',
+        'current.updatedAt': 'Atualizado em',
+        'details.humidity': 'Umidade',
+        'details.humidity.short': 'Umidade',
+        'details.wind': 'Vento',
+        'details.wind.short': 'Vento',
+        'details.precipitation': 'Precipitação',
+        'details.precipitation.short': 'Precipitação',
+        'advice.title': 'Recomendações para hoje',
+        'forecast.title': 'Próximos 7 dias',
+        'forecast.subtitle': 'Clique em um dia para ver mais detalhes',
+        'selectedDay.badge.temperature': 'Temperatura',
+        'selectedDay.max': 'Máx',
+        'selectedDay.min': 'Mín',
+        'selectedDay.badge.details': 'Detalhes',
+        'selectedDay.condition': 'Condição',
+        'compare.title': 'Compare até 3 cidades',
+        'compare.subtitle': 'Adicione cidades e veja o clima atual de cada uma lado a lado',
+        'compare.placeholder': 'Digite o nome de uma cidade para comparar',
+        'compare.add': 'Adicionar',
+        'compare.compare': 'Comparar Climas',
+        'compare.clear': 'Limpar tudo',
+        'compare.table.city': 'Cidade',
+        'compare.table.weather': 'Clima',
+        'compare.table.temp': 'Temp',
+        'footer.data': 'Dados meteorológicos fornecidos por',
+        'footer.madeBy': 'Feito por',
+        'footer.github': 'Github',
+        'footer.portfolio': 'Portfólio',
+        // Condições de clima
+        'weather.clear': 'Céu limpo',
+        'weather.partlyCloudy': 'Parcialmente nublado',
+        'weather.cloudy': 'Nublado',
+        'weather.fog': 'Nevoeiro',
+        'weather.rain': 'Chuva',
+        'weather.snow': 'Neve',
+        'weather.storm': 'Tempestade',
+        'weather.unknown': 'Condição desconhecida',
+        // Advice
+        'advice.rain': 'Chuva prevista para hoje. Leve um guarda-chuva e proteja-se em locais cobertos.',
+        'advice.storm': 'Tempestade prevista. Procure um local seguro, evite áreas abertas e regiões com muitas árvores.',
+        'advice.wind': 'Ventos fortes na região. Evite ficar próximo a árvores ou estruturas instáveis.',
+        'advice.hot': 'Tempo muito quente e/ou UV elevado. Use protetor solar, óculos escuros e mantenha-se hidratado.',
+        'advice.cold': 'Temperaturas baixas. Vista roupas adequadas e proteja-se do frio.',
+        'advice.stable': 'Condições relativamente estáveis para hoje. Ainda assim, acompanhe a previsão ao longo do dia.',
+        // Boas-vindas
+        'welcome.title': 'Bem-vindo!',
+        'welcome.message':
+            'Obrigado por visitar este projeto de previsão do tempo. Explore a previsão, compare cidades e, se quiser me conhecer melhor, acesse meu portfólio para ver outros projetos.',
+        'welcome.cta': 'Conheça meu portfólio'
+    },
+    'en': {
+        'app.title': 'Weather Forecast',
+        'app.subtitle': 'Current weather and 7-day forecast',
+        'search.placeholder': 'Enter a city name (e.g. São Paulo, Lisbon, Tokyo)',
+        'search.button': 'Get forecast',
+        'error.cityNotFound': 'City not found. Please try again.',
+        'current.updatedAt': 'Updated at',
+        'details.humidity': 'Humidity',
+        'details.humidity.short': 'Humidity',
+        'details.wind': 'Wind',
+        'details.wind.short': 'Wind',
+        'details.precipitation': 'Precipitation',
+        'details.precipitation.short': 'Precipitation',
+        'advice.title': 'Recommendations for today',
+        'forecast.title': 'Next 7 days',
+        'forecast.subtitle': 'Click a day to see more details',
+        'selectedDay.badge.temperature': 'Temperature',
+        'selectedDay.max': 'Max',
+        'selectedDay.min': 'Min',
+        'selectedDay.badge.details': 'Details',
+        'selectedDay.condition': 'Condition',
+        'compare.title': 'Compare up to 3 cities',
+        'compare.subtitle': 'Add cities and see current weather side by side',
+        'compare.placeholder': 'Enter a city name to compare',
+        'compare.add': 'Add',
+        'compare.compare': 'Compare weather',
+        'compare.clear': 'Clear all',
+        'compare.table.city': 'City',
+        'compare.table.weather': 'Weather',
+        'compare.table.temp': 'Temp',
+        'footer.data': 'Weather data provided by',
+        'footer.madeBy': 'Made by',
+        'footer.github': 'Github',
+        'footer.portfolio': 'Portfolio',
+        'weather.clear': 'Clear sky',
+        'weather.partlyCloudy': 'Partly cloudy',
+        'weather.cloudy': 'Cloudy',
+        'weather.fog': 'Fog',
+        'weather.rain': 'Rain',
+        'weather.snow': 'Snow',
+        'weather.storm': 'Thunderstorm',
+        'weather.unknown': 'Unknown condition',
+        'advice.rain': 'Rain expected today. Bring an umbrella and stay in covered areas.',
+        'advice.storm': 'Storm expected. Seek shelter, avoid open areas and places with many trees.',
+        'advice.wind': 'Strong winds in the area. Avoid staying near trees or unstable structures.',
+        'advice.hot': 'Very hot weather and/or high UV. Use sunscreen, sunglasses and stay hydrated.',
+        'advice.cold': 'Low temperatures. Wear appropriate clothing and protect yourself from the cold.',
+        'advice.stable': 'Relatively stable conditions today. Still, keep an eye on the forecast throughout the day.',
+        'welcome.title': 'Welcome!',
+        'welcome.message':
+            'Thanks for visiting this weather forecast project. Explore the forecast, compare cities, and if you want to know more about me, visit my portfolio to see other projects.',
+        'welcome.cta': 'Visit my portfolio'
+    },
+    'es': {
+        'app.title': 'Previsión del Tiempo',
+        'app.subtitle': 'Clima actual y previsión para los próximos 7 días',
+        'search.placeholder': 'Escribe el nombre de una ciudad (ej. São Paulo, Lisboa, Tokio)',
+        'search.button': 'Buscar previsión',
+        'error.cityNotFound': 'Ciudad no encontrada. Inténtalo de nuevo.',
+        'current.updatedAt': 'Actualizado en',
+        'details.humidity': 'Humedad',
+        'details.humidity.short': 'Humedad',
+        'details.wind': 'Viento',
+        'details.wind.short': 'Viento',
+        'details.precipitation': 'Precipitación',
+        'details.precipitation.short': 'Precipitación',
+        'advice.title': 'Recomendaciones para hoy',
+        'forecast.title': 'Próximos 7 días',
+        'forecast.subtitle': 'Haz clic en un día para ver más detalles',
+        'selectedDay.badge.temperature': 'Temperatura',
+        'selectedDay.max': 'Máx',
+        'selectedDay.min': 'Mín',
+        'selectedDay.badge.details': 'Detalles',
+        'selectedDay.condition': 'Condición',
+        'compare.title': 'Compara hasta 3 ciudades',
+        'compare.subtitle': 'Añade ciudades y ve el clima actual de cada una lado a lado',
+        'compare.placeholder': 'Escribe el nombre de una ciudad para comparar',
+        'compare.add': 'Añadir',
+        'compare.compare': 'Comparar climas',
+        'compare.clear': 'Limpiar todo',
+        'compare.table.city': 'Ciudad',
+        'compare.table.weather': 'Clima',
+        'compare.table.temp': 'Temp',
+        'footer.data': 'Datos meteorológicos proporcionados por',
+        'footer.madeBy': 'Hecho por',
+        'footer.github': 'Github',
+        'footer.portfolio': 'Portafolio',
+        'weather.clear': 'Cielo despejado',
+        'weather.partlyCloudy': 'Parcialmente nublado',
+        'weather.cloudy': 'Nublado',
+        'weather.fog': 'Niebla',
+        'weather.rain': 'Lluvia',
+        'weather.snow': 'Nieve',
+        'weather.storm': 'Tormenta',
+        'weather.unknown': 'Condición desconocida',
+        'advice.rain': 'Lluvia prevista para hoy. Lleva un paraguas y protégete en lugares cubiertos.',
+        'advice.storm': 'Tormenta prevista. Busca un lugar seguro, evita zonas abiertas y áreas con muchos árboles.',
+        'advice.wind': 'Vientos fuertes en la zona. Evita estar cerca de árboles o estructuras inestables.',
+        'advice.hot': 'Tiempo muy caluroso y/o UV alto. Usa protector solar, gafas de sol y mantente hidratado.',
+        'advice.cold': 'Temperaturas bajas. Viste ropa adecuada y protégete del frío.',
+        'advice.stable': 'Condiciones relativamente estables hoy. Aun así, sigue la previsión durante el día.',
+        'welcome.title': '¡Bienvenido!',
+        'welcome.message':
+            'Gracias por visitar este proyecto de previsión del tiempo. Explora la previsión, compara ciudades y, si quieres conocerme mejor, visita mi portafolio para ver otros proyectos.',
+        'welcome.cta': 'Ver mi portafolio'
+    },
+    'it': {
+        'app.title': 'Previsioni Meteo',
+        'app.subtitle': 'Meteo attuale e previsioni per i prossimi 7 giorni',
+        'search.placeholder': 'Inserisci il nome di una città (es. São Paulo, Lisbona, Tokyo)',
+        'search.button': 'Cerca previsioni',
+        'error.cityNotFound': 'Città non trovata. Riprova.',
+        'current.updatedAt': 'Aggiornato alle',
+        'details.humidity': 'Umidità',
+        'details.humidity.short': 'Umidità',
+        'details.wind': 'Vento',
+        'details.wind.short': 'Vento',
+        'details.precipitation': 'Precipitazioni',
+        'details.precipitation.short': 'Precipitazioni',
+        'advice.title': 'Consigli per oggi',
+        'forecast.title': 'Prossimi 7 giorni',
+        'forecast.subtitle': 'Clicca su un giorno per vedere più dettagli',
+        'selectedDay.badge.temperature': 'Temperatura',
+        'selectedDay.max': 'Max',
+        'selectedDay.min': 'Min',
+        'selectedDay.badge.details': 'Dettagli',
+        'selectedDay.condition': 'Condizione',
+        'compare.title': 'Confronta fino a 3 città',
+        'compare.subtitle': 'Aggiungi città e vedi il meteo attuale di ciascuna fianco a fianco',
+        'compare.placeholder': 'Inserisci il nome di una città da confrontare',
+        'compare.add': 'Aggiungi',
+        'compare.compare': 'Confronta meteo',
+        'compare.clear': 'Pulisci tutto',
+        'compare.table.city': 'Città',
+        'compare.table.weather': 'Meteo',
+        'compare.table.temp': 'Temp',
+        'footer.data': 'Dati meteorologici forniti da',
+        'footer.madeBy': 'Realizzato da',
+        'footer.github': 'Github',
+        'footer.portfolio': 'Portfolio',
+        'weather.clear': 'Cielo sereno',
+        'weather.partlyCloudy': 'Parzialmente nuvoloso',
+        'weather.cloudy': 'Nuvoloso',
+        'weather.fog': 'Nebbia',
+        'weather.rain': 'Pioggia',
+        'weather.snow': 'Neve',
+        'weather.storm': 'Temporale',
+        'weather.unknown': 'Condizione sconosciuta',
+        'advice.rain': 'Pioggia prevista oggi. Porta un ombrello e riparati in luoghi coperti.',
+        'advice.storm': 'Temporale previsto. Cerca un luogo sicuro, evita aree aperte e zone con molti alberi.',
+        'advice.wind': 'Venti forti nella zona. Evita di stare vicino ad alberi o strutture instabili.',
+        'advice.hot': 'Molto caldo e/o UV elevato. Usa protezione solare, occhiali da sole e rimani idratato.',
+        'advice.cold': 'Temperature basse. Indossa abiti adeguati e proteggiti dal freddo.',
+        'advice.stable': 'Condizioni relativamente stabili oggi. Tieni comunque d\'occhio le previsioni.',
+        'welcome.title': 'Benvenuto!',
+        'welcome.message':
+            'Grazie per aver visitato questo progetto di previsioni meteo. Esplora le previsioni, confronta città e, se vuoi conoscermi meglio, visita il mio portfolio per vedere altri progetti.',
+        'welcome.cta': 'Visita il mio portfolio'
+    }
+    // fr, de, ru, ja, ko, zh podem seguir mesma lógica depois, se você quiser completar.
+};
+
+/**
+ * Idioma atual.
+ * @type {string}
+ */
+let currentLang = 'pt-BR';
+
+/**
+ * Aplica traduções na interface com base no idioma selecionado.
+ * @param {string} lang
+ */
+function applyTranslations(lang) {
+    if (typeof document === 'undefined') return;
+
+    // Se a linguagem não existir no dicionário, volta para o pt-BR para evitar misturar textos
+    if (!TRANSLATIONS[lang]) {
+        lang = 'pt-BR';
+    }
+
+    const t = TRANSLATIONS[lang];
+    currentLang = lang;
+
+    // Textos
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (t[key]) {
+            el.textContent = t[key];
+        }
+    });
+
+    // Placeholders
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (t[key]) {
+            el.setAttribute('placeholder', t[key]);
+        }
+    });
+
+    localStorage.setItem('clima_lang', lang);
+}
+
+/**
+ * Traduz o label de condição de clima de acordo com o idioma.
+ * @param {'clear'|'cloudy'|'rain'|'snow'|'storm'|'fog'} category
+ * @returns {string}
+ */
+function translateWeatherLabel(category) {
+    const t = TRANSLATIONS[currentLang] || TRANSLATIONS['pt-BR'];
+    switch (category) {
+        case 'clear':
+            return t['weather.clear'];
+        case 'rain':
+            return t['weather.rain'];
+        case 'snow':
+            return t['weather.snow'];
+        case 'storm':
+            return t['weather.storm'];
+        case 'fog':
+            return t['weather.fog'];
+        case 'cloudy':
+            return t['weather.cloudy'];
+        default:
+            return t['weather.unknown'];
+    }
+}
+
+/**
+ * Converte um código weathercode em categoria base.
+ * A tradução do texto é feita em translateWeatherLabel.
  * @param {number} code
- * @returns {{label: string, category: 'clear'|'cloudy'|'rain'|'snow'|'storm'|'fog'}}
+ * @returns {{category: 'clear'|'cloudy'|'rain'|'snow'|'storm'|'fog'}}
  */
 function mapWeatherCode(code) {
     const c = Number(code);
 
-    if (c === 0) return { label: 'Céu limpo', category: 'clear' };
-    if (c === 1 || c === 2) return { label: 'Parcialmente nublado', category: 'clear' };
-    if (c === 3) return { label: 'Nublado', category: 'cloudy' };
-    if (c === 45 || c === 48) return { label: 'Nevoeiro', category: 'fog' };
+    if (c === 0) return { category: 'clear' };
+    if (c === 1 || c === 2) return { category: 'clear' };
+    if (c === 3) return { category: 'cloudy' };
+    if (c === 45 || c === 48) return { category: 'fog' };
 
     if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(c)) {
-        return { label: 'Chuva', category: 'rain' };
+        return { category: 'rain' };
     }
 
     if ([71, 73, 75, 77, 85, 86].includes(c)) {
-        return { label: 'Neve', category: 'snow' };
+        return { category: 'snow' };
     }
 
     if ([95, 96, 99].includes(c)) {
-        return { label: 'Tempestade', category: 'storm' };
+        return { category: 'storm' };
     }
 
-    return { label: 'Condição desconhecida', category: 'cloudy' };
+    return { category: 'cloudy' };
 }
 
 /**
@@ -48,7 +339,14 @@ function applyTheme(weatherCode, isDay) {
     const { category } = mapWeatherCode(weatherCode);
     const body = document.body;
 
-    body.classList.remove('theme-default', 'theme-sunny', 'theme-cloudy', 'theme-rainy', 'theme-storm', 'theme-night');
+    body.classList.remove(
+        'theme-default',
+        'theme-sunny',
+        'theme-cloudy',
+        'theme-rainy',
+        'theme-storm',
+        'theme-night'
+    );
 
     if (!isDay) {
         body.classList.add('theme-night');
@@ -79,8 +377,12 @@ function applyTheme(weatherCode, isDay) {
  * @returns {Promise<Object|null>}
  */
 async function getCityCoordinates(cityName) {
+    // Pega apenas as duas primeiras letras do idioma atual (ex: 'pt' de 'pt-BR', 'en' de 'en-US')
+    const langCode = currentLang.split('-')[0];
+    
+    // Atualiza a URL para usar a variável langCode no lugar do 'en' fixo
     const geocodingUrl =
-        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1&language=pt&format=json`;
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1&language=${langCode}&format=json`;
 
     try {
         const response = await fetch(geocodingUrl);
@@ -234,49 +536,80 @@ function buildAdvice(weather) {
     const maxWindToday = daily.windspeed_10m_max?.[todayIndex] ?? current.windSpeed;
     const uvToday = daily.uv_index_max?.[todayIndex] ?? 0;
 
+    const t = TRANSLATIONS[currentLang] || TRANSLATIONS['pt-BR'];
+
     if (category === 'rain' || precipToday > 0 || precipProbToday >= 40) {
         items.push({
             icon: '☔',
-            text: 'Chuva prevista para hoje. Leve um guarda-chuva e proteja-se em locais cobertos.'
+            text: t['advice.rain']
         });
     }
 
     if (category === 'storm') {
         items.push({
             icon: '⛈️',
-            text: 'Tempestade prevista. Procure um local seguro, evite áreas abertas e regiões com muitas árvores.'
+            text: t['advice.storm']
         });
     }
 
     if (maxWindToday >= 40) {
         items.push({
             icon: '💨',
-            text: 'Ventos fortes na região. Evite ficar próximo a árvores ou estruturas instáveis.'
+            text: t['advice.wind']
         });
     }
 
     if (temp >= 30 || uvToday >= 6) {
         items.push({
             icon: '🌞',
-            text: 'Tempo muito quente e/ou UV elevado. Use protetor solar, óculos escuros e mantenha-se hidratado.'
+            text: t['advice.hot']
         });
     }
 
     if (temp <= 10) {
         items.push({
             icon: '🧣',
-            text: 'Temperaturas baixas. Vista roupas adequadas e proteja-se do frio.'
+            text: t['advice.cold']
         });
     }
 
     if (items.length === 0) {
         items.push({
             icon: '✅',
-            text: 'Condições relativamente estáveis para hoje. Ainda assim, acompanhe a previsão ao longo do dia.'
+            text: t['advice.stable']
         });
     }
 
     return items;
+}
+
+/**
+ * Formata nome do dia da semana no idioma atual.
+ */
+function formatWeekday(date) {
+    const fmt = new Intl.DateTimeFormat(currentLang, { weekday: 'long' });
+    const text = fmt.format(date);
+    return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/**
+ * Formata data curta (dia + mês) no idioma atual.
+ */
+function formatDayMonth(date) {
+    const fmt = new Intl.DateTimeFormat(currentLang, { day: '2-digit', month: 'short' });
+    return fmt.format(date);
+}
+
+/**
+ * Formata data longa para o card do dia selecionado.
+ */
+function formatFullDate(date) {
+    const fmt = new Intl.DateTimeFormat(currentLang, {
+        weekday: 'long',
+        day: '2-digit',
+        month: 'long'
+    });
+    return fmt.format(date);
 }
 
 /**
@@ -291,10 +624,7 @@ function renderCurrentWeather(weather) {
     const tzEl = document.getElementById('timezone-label');
     const tempEl = document.getElementById('temp-value');
     const windInfoEl = document.getElementById('wind-info');
-    const windSpeedEl = document.getElementById('wind-speed');
-    const windDirEl = document.getElementById('wind-direction');
     const descEl = document.getElementById('weather-description');
-    const codeEl = document.getElementById('weather-code');
     const periodEl = document.getElementById('day-period');
     const timeEl = document.getElementById('weather-time');
     const humidityEl = document.getElementById('humidity-value');
@@ -306,14 +636,18 @@ function renderCurrentWeather(weather) {
 
     const windInfo = `${current.windSpeed.toFixed(1)} km/h • ${current.windDirection.toFixed(0)}°`;
     if (windInfoEl) windInfoEl.textContent = windInfo;
-    if (windSpeedEl) windSpeedEl.textContent = current.windSpeed.toFixed(1);
-    if (windDirEl) windDirEl.textContent = current.windDirection.toFixed(0);
 
-    const { label } = mapWeatherCode(current.weatherCode);
-    if (descEl) descEl.textContent = label;
-    if (codeEl) codeEl.textContent = String(current.weatherCode);
+    const { category } = mapWeatherCode(current.weatherCode);
+    if (descEl) descEl.textContent = translateWeatherLabel(category);
 
-    const periodText = current.isDay ? 'Dia' : 'Noite';
+    const periodTranslations = {
+        'pt-BR': { day: 'Dia', night: 'Noite' },
+        'en': { day: 'Day', night: 'Night' },
+        'es': { day: 'Día', night: 'Noche' },
+        'it': { day: 'Giorno', night: 'Notte' }
+    };
+    const pTrans = periodTranslations[currentLang] || periodTranslations['pt-BR'];
+    const periodText = current.isDay ? pTrans.day : pTrans.night;
     if (periodEl) periodEl.textContent = periodText;
     if (timeEl) timeEl.textContent = current.time;
 
@@ -341,7 +675,8 @@ function renderCurrentWeather(weather) {
         adviceItems.forEach(item => {
             const li = document.createElement('li');
             li.className = 'advice-item';
-            li.innerHTML = `<span class="advice-icon">${item.icon}</span><span class="advice-text">${item.text}</span>`;
+            li.innerHTML =
+                `<span class="advice-icon">${item.icon}</span><span class="advice-text">${item.text}</span>`;
             adviceList.appendChild(li);
         });
     }
@@ -374,17 +709,16 @@ function renderForecast(daily) {
         const wind = daily.windspeed_10m_max?.[i] ?? 0;
 
         const dateObj = new Date(dateStr + 'T00:00:00');
-        const weekdayFormatter = new Intl.DateTimeFormat('pt-BR', { weekday: 'long' });
-        const dayFormatter = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' });
-        const weekday = weekdayFormatter.format(dateObj);
-        const dayLabel = dayFormatter.format(dateObj);
+        const weekday = formatWeekday(dateObj);
+        const dayLabel = formatDayMonth(dateObj);
 
         const item = document.createElement('button');
         item.type = 'button';
         item.className = 'forecast-day';
         item.dataset.index = String(i);
 
-        const { label, category } = mapWeatherCode(wCode);
+        const { category } = mapWeatherCode(wCode);
+        const label = translateWeatherLabel(category);
         const dayIconFile = getIconByWeatherCode(wCode, true); // usa versão diurna como ícone padrão
 
         item.innerHTML = `
@@ -392,7 +726,7 @@ function renderForecast(daily) {
         <div class="forecast-date-main">
             <img class="forecast-icon" src="assets/weather-icons/svg/${dayIconFile}" alt="${label}">
             <div class="forecast-date-text">
-                <span class="forecast-weekday">${weekday.charAt(0).toUpperCase() + weekday.slice(1)}</span>
+                <span class="forecast-weekday">${weekday}</span>
                 <span class="forecast-desc">${dayLabel}</span>
             </div>
         </div>
@@ -417,10 +751,6 @@ function renderForecast(daily) {
 
         listEl.appendChild(item);
     }
-
-    if (days.length < FORECAST_DAYS) {
-        console.info(`A API retornou apenas ${days.length} dias de previsão.`);
-    }
 }
 
 /**
@@ -444,9 +774,7 @@ function renderSelectedDay(index, daily) {
 
     const dateStr = daily.time[index];
     const dateObj = new Date(dateStr + 'T00:00:00');
-    const formatter = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
-
-    labelEl.textContent = formatter.format(dateObj);
+    labelEl.textContent = formatFullDate(dateObj);
 
     const max = daily.temperature_2m_max?.[index];
     const min = daily.temperature_2m_min?.[index];
@@ -458,8 +786,8 @@ function renderSelectedDay(index, daily) {
     maxEl.textContent = max != null ? max.toFixed(1) : '‑';
     minEl.textContent = min != null ? min.toFixed(1) : '‑';
 
-    const { label } = mapWeatherCode(wCode);
-    descEl.textContent = label;
+    const { category } = mapWeatherCode(wCode);
+    descEl.textContent = translateWeatherLabel(category);
 
     humEl.textContent = humidity != null ? `${humidity.toFixed(0)}%` : '‑';
     windEl.textContent = `${wind.toFixed(1)} km/h`;
@@ -482,9 +810,10 @@ function updateUI(data) {
     if (!weatherResult || !errorMessage || !errorText) return;
 
     if (data.error) {
+        const t = TRANSLATIONS[currentLang] || TRANSLATIONS['pt-BR'];
         weatherResult.classList.add('hidden');
         errorMessage.classList.remove('hidden');
-        errorText.textContent = data.error;
+        errorText.textContent = t['error.cityNotFound'];
         applyTheme(3, true); // tema neutro nublado
         return;
     }
@@ -510,7 +839,13 @@ let comparisonCities = [];
  */
 function addCityToComparison(cityName) {
     if (comparisonCities.length >= 3) {
-        alert('Você só pode comparar até 3 cidades.');
+        alert(
+            currentLang === 'en'
+                ? 'You can only compare up to 3 cities.'
+                : currentLang === 'es'
+                    ? 'Solo puedes comparar hasta 3 ciudades.'
+                    : 'Você só pode comparar até 3 cidades.'
+        );
         return;
     }
 
@@ -519,7 +854,13 @@ function addCityToComparison(cityName) {
 
     // Evita duplicatas exatas
     if (comparisonCities.some(c => c.toLowerCase() === normalized.toLowerCase())) {
-        alert('Essa cidade já está na lista de comparação.');
+        alert(
+            currentLang === 'en'
+                ? 'This city is already in the comparison list.'
+                : currentLang === 'es'
+                    ? 'Esta ciudad ya está en la lista de comparación.'
+                    : 'Essa cidade já está na lista de comparação.'
+        );
         return;
     }
 
@@ -569,9 +910,11 @@ function renderComparisonList() {
     });
 
     if (addBtn) {
+        const t = TRANSLATIONS[currentLang] || TRANSLATIONS['pt-BR'];
         addBtn.disabled = comparisonCities.length >= 3;
         addBtn.style.opacity = comparisonCities.length >= 3 ? '0.6' : '1';
         addBtn.style.cursor = comparisonCities.length >= 3 ? 'not-allowed' : 'pointer';
+        addBtn.textContent = t['compare.add'];
     }
 }
 
@@ -587,7 +930,13 @@ async function compareCities() {
     if (!resultSection || !tableBody) return;
 
     if (comparisonCities.length === 0) {
-        alert('Adicione pelo menos uma cidade para comparar.');
+        alert(
+            currentLang === 'en'
+                ? 'Add at least one city to compare.'
+                : currentLang === 'es'
+                    ? 'Añade al menos una ciudad para comparar.'
+                    : 'Adicione pelo menos uma cidade para comparar.'
+        );
         return;
     }
 
@@ -603,13 +952,21 @@ async function compareCities() {
         const row = document.createElement('tr');
 
         if (data.error) {
+            const errorText =
+                currentLang === 'en'
+                    ? `Error getting data: ${data.error}`
+                    : currentLang === 'es'
+                        ? `Error al obtener datos: ${data.error}`
+                        : `Erro ao obter dados: ${data.error}`;
+
             row.innerHTML = `
                 <td>${comparisonCities[index]}</td>
-                <td colspan="4" style="color: var(--danger);">Erro ao obter dados: ${data.error}</td>
+                <td colspan="4" style="color: var(--danger);">${errorText}</td>
             `;
         } else {
             const { city, current } = data;
-            const { label } = mapWeatherCode(current.weatherCode);
+            const { category } = mapWeatherCode(current.weatherCode);
+            const label = translateWeatherLabel(category);
             const iconFile = getIconByWeatherCode(current.weatherCode, current.isDay);
 
             row.innerHTML = `
@@ -643,49 +1000,93 @@ function clearComparison() {
     }
 }
 
+/**
+ * Mostra o balão de boas-vindas (apenas 1x por dispositivo).
+ */
+function maybeShowWelcome() {
+    const overlay = document.getElementById('welcome-overlay');
+    const closeBtn = document.getElementById('welcome-close');
+
+    if (!overlay || !closeBtn) return;
+
+    const closeWelcome = (event) => {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+
+        overlay.classList.add('hidden');
+        localStorage.setItem('clima_welcome_seen', '1');
+    };
+
+    const alreadySeen =
+        localStorage.getItem('clima_welcome_seen') === '1';
+
+    if (!alreadySeen) {
+        overlay.classList.remove('hidden');
+    }
+
+    closeBtn.addEventListener('click', closeWelcome);
+
+    overlay.addEventListener('click', (event) => {
+        if (event.target === overlay) {
+            closeWelcome(event);
+        }
+    });
+}
 // ---------- Inicialização / Formulário ----------
 
 if (typeof document !== 'undefined') {
     document.addEventListener('DOMContentLoaded', () => {
+        const savedLang = localStorage.getItem('clima_lang') || 'pt-BR';
+        applyTranslations(savedLang);
+
+        // Balão de boas-vindas depois de aplicar idioma
+        maybeShowWelcome();
+
+        // --- FORMULÁRIO 1: BUSCA PRINCIPAL ---
         const form = document.getElementById('weather-form');
         const cityInput = document.getElementById('city-input');
 
-        if (!form || !cityInput) return;
+        if (form && cityInput) {
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                event.stopPropagation(); // Impede conflitos com outros botões
 
-        form.addEventListener('submit', async (event) => {
-            event.preventDefault();
+                const cityName = cityInput.value.trim();
+                if (!cityName) {
+                    alert(
+                        currentLang === 'en'
+                            ? 'Please enter a city name for the forecast'
+                            : currentLang === 'es'
+                                ? 'Por favor, escribe el nombre de la ciudad principal'
+                                : 'Por favor, digite o nome da cidade na busca principal'
+                    );
+                    return;
+                }
 
-            const cityName = cityInput.value.trim();
-            if (!cityName) {
-                alert('Por favor, digite o nome de uma cidade');
-                return;
-            }
+                const weatherData = await getWeatherByCity(cityName);
+                updateUI(weatherData);
+            });
+        }
 
-            const weatherData = await getWeatherByCity(cityName);
-            updateUI(weatherData);
-        });
-
-        // Seletor de idiomas – por enquanto só registra o idioma escolhido em localStorage
+        // --- SELETOR DE IDIOMAS ---
         const langButtons = document.querySelectorAll('.lang-btn');
         langButtons.forEach(btn => {
             btn.addEventListener('click', () => {
                 const lang = btn.dataset.lang;
                 if (lang) {
-                    localStorage.setItem('clima_lang', lang);
-                    console.info(`Idioma selecionado: ${lang} (tradução ainda não implementada)`);
-                    // Aqui no futuro você pode chamar uma função applyTranslations(lang)
+                    applyTranslations(lang);
+                    // Força a recarga da pesquisa atual para traduzir os dias da semana no HTML
+                    const currentCityInput = document.getElementById('city-input');
+                    if (currentCityInput && currentCityInput.value.trim() !== '') {
+                        document.querySelector('#weather-form button[type="submit"]').click();
+                    }
                 }
             });
         });
 
-        // Carrega idioma salvo (para uso futuro)
-        const savedLang = localStorage.getItem('clima_lang');
-        if (savedLang) {
-            console.info(`Idioma carregado: ${savedLang}`);
-        }
-
-        // ---------- Comparação de cidades ----------
-
+        // --- FORMULÁRIO 2: COMPARAÇÃO DE CIDADES ---
         const compareForm = document.getElementById('compare-form');
         const compareCityInput = document.getElementById('compare-city-input');
         const compareBtn = document.getElementById('compare-btn');
@@ -694,10 +1095,17 @@ if (typeof document !== 'undefined') {
         if (compareForm && compareCityInput) {
             compareForm.addEventListener('submit', (event) => {
                 event.preventDefault();
+                event.stopPropagation(); // Impede que ative a busca de cima
 
                 const cityName = compareCityInput.value.trim();
                 if (!cityName) {
-                    alert('Por favor, digite o nome de uma cidade');
+                    alert(
+                        currentLang === 'en'
+                            ? 'Please enter a city name to compare'
+                            : currentLang === 'es'
+                                ? 'Por favor, escribe una ciudad para comparar'
+                                : 'Por favor, digite uma cidade para comparar'
+                    );
                     return;
                 }
 
@@ -707,13 +1115,15 @@ if (typeof document !== 'undefined') {
         }
 
         if (compareBtn) {
-            compareBtn.addEventListener('click', () => {
+            compareBtn.addEventListener('click', (event) => {
+                event.preventDefault();
                 compareCities();
             });
         }
 
         if (clearCompareBtn) {
-            clearCompareBtn.addEventListener('click', () => {
+            clearCompareBtn.addEventListener('click', (event) => {
+                event.preventDefault();
                 clearComparison();
             });
         }

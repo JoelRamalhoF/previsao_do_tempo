@@ -9,11 +9,40 @@
 </head>
 
 <body class="theme-default">
+    <!-- Balão de boas-vindas -->
+    <div id="welcome-overlay" class="welcome-overlay hidden">
+        <div class="welcome-modal">
+            <!-- Botão X correto controlado pelo CSS -->
+            <button id="welcome-close" type="button" aria-label="Fechar"
+    style="position: absolute; top: 5px; right: 5px; z-index: 2147483647; cursor: pointer; background: transparent; border: none; font-size: 24px; color: #6c7a89; padding: 15px;"
+    onclick="document.getElementById('welcome-overlay').style.display = 'none'; localStorage.setItem('clima_welcome_seen', '1');">
+    ✕
+</button>
+            
+            <h2 class="welcome-title" data-i18n="welcome.title">Bem-vindo!</h2>
+            
+            <p class="welcome-text" data-i18n="welcome.message">
+                Obrigado por visitar este projeto de previsão do tempo.
+                Navegue pela previsão, compare cidades e, se quiser me conhecer melhor,
+                acesse meu portfólio para ver outros projetos.
+            </p>
+            
+            <!-- Link do portfólio mantido comentado conforme o seu código original -->
+            <a class="welcome-cta" href="https://joelramalhof.github.io/portfolio/" target="_blank" rel="noreferrer"
+                data-i18n="welcome.cta">
+                Conheça meu portfólio
+            </a> 
+        </div>
+    </div>
+
     <div class="app-shell">
         <header class="app-header">
-            <h1>Previsão do Tempo</h1>
-            <p class="app-subtitle">Clima atual e previsão para os próximos 7 dias</p>
+            <h1 data-i18n="app.title">Previsão do Tempo</h1>
+            <p class="app-subtitle" data-i18n="app.subtitle">
+                Clima atual e previsão para os próximos 7 dias
+            </p>
         </header>
+
         <nav class="language-switcher" aria-label="Selecionar idioma">
             <button class="lang-btn" data-lang="pt-BR" title="Português (Brasil)">🇧🇷</button>
             <button class="lang-btn" data-lang="en" title="English">🇺🇸</button>
@@ -33,15 +62,20 @@
                 <form id="weather-form" class="search-form">
                     <div class="input-wrapper">
                         <input type="text" id="city-input" class="search-input"
+                            data-i18n-placeholder="search.placeholder"
                             placeholder="Digite o nome da cidade (ex.: São Paulo, Lisboa, Tóquio)" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Buscar previsão</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="search.button">
+                        Buscar previsão
+                    </button>
                 </form>
             </section>
 
             <!-- Mensagem de erro -->
             <section id="error-message" class="error-message hidden">
-                <p id="error-text">Cidade não encontrada. Tente novamente.</p>
+                <p id="error-text" data-i18n="error.cityNotFound">
+                    Cidade não encontrada. Tente novamente.
+                </p>
             </section>
 
             <!-- Resultado principal -->
@@ -58,7 +92,8 @@
                                 <span id="weather-description"></span>
                             </p>
                             <p class="time-label">
-                                Atualizado em <span id="weather-time"></span>
+                                <span data-i18n="current.updatedAt">Atualizado em</span>
+                                <span id="weather-time"></span>
                             </p>
                         </div>
                         <div class="current-main">
@@ -79,7 +114,7 @@
                                 <img src="assets/weather-icons/svg/wi-humidity.svg" alt="Umidade">
                             </div>
                             <div class="detail-text">
-                                <span class="detail-label">Umidade</span>
+                                <span class="detail-label" data-i18n="details.humidity">Umidade</span>
                                 <span id="humidity-value" class="detail-value">‑</span>
                             </div>
                         </div>
@@ -89,7 +124,7 @@
                                 <img src="assets/weather-icons/svg/wi-strong-wind.svg" alt="Vento">
                             </div>
                             <div class="detail-text">
-                                <span class="detail-label">Vento</span>
+                                <span class="detail-label" data-i18n="details.wind">Vento</span>
                                 <span id="wind-info" class="detail-value">‑</span>
                             </div>
                         </div>
@@ -99,7 +134,7 @@
                                 <img src="assets/weather-icons/svg/wi-raindrops.svg" alt="Precipitação">
                             </div>
                             <div class="detail-text">
-                                <span class="detail-label">Precipitação</span>
+                                <span class="detail-label" data-i18n="details.precipitation">Precipitação</span>
                                 <span id="precipitation-value" class="detail-value">0 mm</span>
                             </div>
                         </div>
@@ -107,7 +142,7 @@
 
                     <!-- Mensagens inteligentes -->
                     <section class="advice-section">
-                        <h3 class="section-title">Recomendações para hoje</h3>
+                        <h3 class="section-title" data-i18n="advice.title">Recomendações para hoje</h3>
                         <ul id="advice-list" class="advice-list">
                             <!-- Itens preenchidos via JS -->
                         </ul>
@@ -118,8 +153,10 @@
                 <article class="card forecast-card">
                     <header class="forecast-header">
                         <div>
-                            <h3 class="section-title">Próximos 7 dias</h3>
-                            <p class="section-subtitle">Clique em um dia para ver mais detalhes</p>
+                            <h3 class="section-title" data-i18n="forecast.title">Próximos 7 dias</h3>
+                            <p class="section-subtitle" data-i18n="forecast.subtitle">
+                                Clique em um dia para ver mais detalhes
+                            </p>
                         </div>
                     </header>
 
@@ -133,19 +170,25 @@
                         <h4 id="selected-day-label" class="selected-day-title"></h4>
                         <div class="selected-day-grid">
                             <div class="selected-temp">
-                                <span class="badge">Temperatura</span>
+                                <span class="badge" data-i18n="selectedDay.badge.temperature">Temperatura</span>
                                 <p>
-                                    Máx: <span id="selected-max-temp">‑</span>°C<br>
-                                    Mín: <span id="selected-min-temp">‑</span>°C
+                                    <span data-i18n="selectedDay.max">Máx</span>:
+                                    <span id="selected-max-temp">‑</span>°C<br>
+                                    <span data-i18n="selectedDay.min">Mín</span>:
+                                    <span id="selected-min-temp">‑</span>°C
                                 </p>
                             </div>
                             <div class="selected-extra">
-                                <span class="badge">Detalhes</span>
+                                <span class="badge" data-i18n="selectedDay.badge.details">Detalhes</span>
                                 <p>
-                                    Condição: <span id="selected-description">‑</span><br>
-                                    Umidade: <span id="selected-humidity">‑</span><br>
-                                    Vento: <span id="selected-wind">‑</span><br>
-                                    Precipitação: <span id="selected-precipitation">‑</span>
+                                    <span data-i18n="selectedDay.condition">Condição</span>:
+                                    <span id="selected-description">‑</span><br>
+                                    <span data-i18n="details.humidity.short">Umidade</span>:
+                                    <span id="selected-humidity">‑</span><br>
+                                    <span data-i18n="details.wind.short">Vento</span>:
+                                    <span id="selected-wind">‑</span><br>
+                                    <span data-i18n="details.precipitation.short">Precipitação</span>:
+                                    <span id="selected-precipitation">‑</span>
                                 </p>
                             </div>
                         </div>
@@ -155,15 +198,20 @@
 
             <!-- Seção de comparação de cidades -->
             <section class="compare-section">
-                <h3 class="section-title">Compare até 3 cidades</h3>
-                <p class="section-subtitle">Adicione cidades e veja o clima atual de cada uma lado a lado</p>
+                <h3 class="section-title" data-i18n="compare.title">Compare até 3 cidades</h3>
+                <p class="section-subtitle" data-i18n="compare.subtitle">
+                    Adicione cidades e veja o clima atual de cada uma lado a lado
+                </p>
 
                 <form id="compare-form" class="compare-form">
                     <div class="input-wrapper">
                         <input type="text" id="compare-city-input" class="search-input"
+                            data-i18n-placeholder="compare.placeholder"
                             placeholder="Digite o nome de uma cidade para comparar" required>
                     </div>
-                    <button type="submit" class="btn btn-primary" id="add-city-btn">Adicionar</button>
+                    <button type="submit" class="btn btn-primary" id="add-city-btn" data-i18n="compare.add">
+                        Adicionar
+                    </button>
                 </form>
 
                 <div id="compare-list" class="compare-list">
@@ -171,19 +219,23 @@
                 </div>
 
                 <div class="compare-actions">
-                    <button id="compare-btn" class="btn btn-primary">Comparar Climas</button>
-                    <button id="clear-compare-btn" class="btn btn-secondary">Limpar tudo</button>
+                    <button id="compare-btn" class="btn btn-primary" data-i18n="compare.compare">
+                        Comparar Climas
+                    </button>
+                    <button id="clear-compare-btn" class="btn btn-secondary" data-i18n="compare.clear">
+                        Limpar tudo
+                    </button>
                 </div>
 
                 <section id="compare-result" class="compare-result hidden">
                     <table class="compare-table">
                         <thead>
                             <tr>
-                                <th>Cidade</th>
-                                <th>Clima</th>
-                                <th>Temp</th>
-                                <th>Umidade</th>
-                                <th>Vento</th>
+                                <th data-i18n="compare.table.city">Cidade</th>
+                                <th data-i18n="compare.table.weather">Clima</th>
+                                <th data-i18n="compare.table.temp">Temp</th>
+                                <th data-i18n="details.humidity">Umidade</th>
+                                <th data-i18n="details.wind">Vento</th>
                             </tr>
                         </thead>
                         <tbody id="compare-table-body">
@@ -195,14 +247,21 @@
         </main>
 
         <footer class="app-footer">
-            <p>Dados meteorológicos fornecidos por <a href="https://open-meteo.com/" target="_blank"
-                    rel="noreferrer">Open-Meteo</a>.</p>
+            <p>
+                <span data-i18n="footer.data">Dados meteorológicos fornecidos por</span>
+                <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo</a>.
+            </p>
             <p class="footer-author">
-                Feito por <strong>Joel Ramalho Filho</strong> - 2026<br>
-                Github: <a href="https://github.com/JoelRamalhoF" target="_blank"
-                    rel="noreferrer">github.com/JoelRamalhoF</a><br>
-                Portfólio: <a href="https://joelramalhof.github.io/portfolio/" target="_blank"
-                    rel="noreferrer">joelramalhof.github.io/portfolio/</a>
+                <span data-i18n="footer.madeBy">Feito por</span>
+                <strong>Joel Ramalho Filho</strong> - 2026<br>
+                <span data-i18n="footer.github">Github</span>:
+                <a href="https://github.com/JoelRamalhoF" target="_blank" rel="noreferrer">
+                    github.com/JoelRamalhoF
+                </a><br>
+                <span data-i18n="footer.portfolio">Portfólio</span>:
+                <a href="https://joelramalhof.github.io/portfolio/" target="_blank" rel="noreferrer">
+                    joelramalhof.github.io/portfolio/
+                </a>
             </p>
         </footer>
     </div>
