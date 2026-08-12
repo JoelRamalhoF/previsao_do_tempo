@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Previsão do Tempo</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Previsão do Tempo</h1>
+        </header>
+
+        <main>
+            <form id="weather-form">
+                <div class="input-group">
+                    <input 
+                        type="text" 
+                        id="city-input" 
+                        placeholder="Digite o nome da cidade" 
+                        required
+                    >
+                    <button type="submit">Buscar</button>
+                </div>
+            </form>
+
+            <div id="weather-result" class="weather-result hidden">
+                <h2 id="city-name"></h2>
+                <div class="temperature">
+                    <span id="temp-value"></span>
+                    <span class="temp-unit">°C</span>
+                </div>
+                <div class="weather-info">
+                    <p><strong>Vento:</strong> <span id="wind-speed"></span> km/h</p>
+                    <p><strong>Direção do vento:</strong> <span id="wind-direction"></span>°</p>
+                    <p><strong>Código do tempo:</strong> <span id="weather-code"></span></p>
+                    <p><strong>Data/hora:</strong> <span id="weather-time"></span></p>
+                </div>
+            </div>
+
+            <div id="error-message" class="error-message hidden">
+                <p>Cidade não encontrada. Tente novamente.</p>
+            </div>
+        </main>
+    </div>
+
+    <script src="assets/js/api.js"></script>
+</body>
+</html>
