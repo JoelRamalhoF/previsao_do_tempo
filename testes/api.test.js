@@ -1,11 +1,8 @@
 /**
  * Testes para as funções do arquivo assets/js/api.js
- * Jest roda em Node, então precisamos ajustar caminhos e mocks.
+ * Jest roda em Node, então usamos mocks de fetch.
  */
 
-const path = require('path');
-
-// Importa funções do api.js
 const {
     getCityCoordinates,
     getWeatherData,
@@ -49,7 +46,7 @@ describe('Função getCityCoordinates', () => {
         });
     });
 
-    test('Nome de cidade inexistente retorna null', async () => {
+    test('Nome de cidade inexistente retorna null (exceção tratada)', async () => {
         const fakeResponse = { results: [] };
 
         fetch.mockResolvedValueOnce({
@@ -109,6 +106,24 @@ describe('Função getWeatherData', () => {
         const result = await getWeatherData(-23.55, -46.63, 'America/Sao_Paulo');
         expect(result).toBeNull();
     });
+
+    test('Limite de requisições da API excedido (HTTP 429) é tratado como falha', async () => {
+        fetch.mockResolvedValueOnce({
+            ok: false,
+            status: 429,
+            statusText: 'Too Many Requests'
+        });
+
+        const result = await getWeatherData(-23.55, -46.63, 'America/Sao_Paulo');
+        expect(result).toBeNull();
+    });
+
+    test('Conexão de rede instável (fetch rejeita) retorna null', async () => {
+        fetch.mockRejectedValueOnce(new Error('Network error'));
+
+        const result = await getWeatherData(-23.55, -46.63, 'America/Sao_Paulo');
+        expect(result).toBeNull();
+    });
 });
 
 describe('Função getWeatherByCity', () => {
@@ -138,7 +153,6 @@ describe('Função getWeatherByCity', () => {
             timezone: 'America/Sao_Paulo'
         };
 
-        // 1ª chamada: geocoding, 2ª chamada: previsão
         fetch
             .mockResolvedValueOnce({
                 ok: true,
