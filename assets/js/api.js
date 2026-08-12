@@ -1,25 +1,81 @@
 /**
- * @fileoverview Funções principais do aplicativo de previsão do tempo.
- * Responsável por:
- * - Buscar coordenadas de cidades na API de geocodificação Open-Meteo
- * - Obter dados meteorológicos atuais pela API de previsão Open-Meteo
- * - Mapear códigos de tempo (weathercode) para ícones SVG
- * - Integrar os dados com a interface HTML do projeto
+ * @fileoverview Lógica principal do aplicativo de previsão do tempo.
+ * - Geocodificação de cidades (Open-Meteo Geocoding API)
+ * - Clima atual e previsão diária (Open-Meteo Forecast API)
+ * - Mapeamento de códigos de tempo para ícones e descrições
+ * - Atualização dinâmica da interface, cores e mensagens
  */
 
+const FORECAST_DAYS = 7;
+
 /**
- * Busca coordenadas (latitude, longitude, timezone) de uma cidade
- * utilizando a API de geocodificação da Open-Meteo.
- *
- * @async
- * @param {string} cityName - Nome da cidade a ser pesquisada (em qualquer idioma).
- * @returns {Promise<Object|null>} Objeto com dados da cidade (name, latitude, longitude, timezone),
- *          ou null caso não encontre resultados ou ocorra erro na requisição.
- * @throws {Error} Pode lançar erro interno se o response.ok for falso, tratado internamente no catch.
- *
- * @example
- * const saoPaulo = await getCityCoordinates('São Paulo');
- * // saoPaulo.latitude -> -23.55
+ * Converte um código weathercode da Open-Meteo em um rótulo e categoria.
+ * @param {number} code
+ * @returns {{label: string, category: 'clear'|'cloudy'|'rain'|'snow'|'storm'|'fog'}}
+ */
+function mapWeatherCode(code) {
+    const c = Number(code);
+
+    if (c === 0) return { label: 'Céu limpo', category: 'clear' };
+    if (c === 1 || c === 2) return { label: 'Parcialmente nublado', category: 'clear' };
+    if (c === 3) return { label: 'Nublado', category: 'cloudy' };
+    if (c === 45 || c === 48) return { label: 'Nevoeiro', category: 'fog' };
+
+    if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(c)) {
+        return { label: 'Chuva', category: 'rain' };
+    }
+
+    if ([71, 73, 75, 77, 85, 86].includes(c)) {
+        return { label: 'Neve', category: 'snow' };
+    }
+
+    if ([95, 96, 99].includes(c)) {
+        return { label: 'Tempestade', category: 'storm' };
+    }
+
+    return { label: 'Condição desconhecida', category: 'cloudy' };
+}
+
+/**
+ * Define a classe de tema no <body> de acordo com o código de tempo e dia/noite.
+ * @param {number} weatherCode
+ * @param {boolean} isDay
+ */
+function applyTheme(weatherCode, isDay) {
+    if (typeof document === 'undefined') return;
+
+    const { category } = mapWeatherCode(weatherCode);
+    const body = document.body;
+
+    body.classList.remove('theme-default', 'theme-sunny', 'theme-cloudy', 'theme-rainy', 'theme-storm', 'theme-night');
+
+    if (!isDay) {
+        body.classList.add('theme-night');
+        return;
+    }
+
+    switch (category) {
+        case 'clear':
+            body.classList.add('theme-sunny');
+            break;
+        case 'rain':
+            body.classList.add('theme-rainy');
+            break;
+        case 'storm':
+            body.classList.add('theme-storm');
+            break;
+        case 'fog':
+        case 'cloudy':
+        default:
+            body.classList.add('theme-cloudy');
+            break;
+    }
+}
+
+/**
+ * Busca coordenadas (latitude, longitude, timezone) de uma cidade.
+ * @param {string} cityName
+ * @returns {Promise<Object|null>}
  */
 async function getCityCoordinates(cityName) {
     const geocodingUrl =
@@ -40,24 +96,20 @@ async function getCityCoordinates(cityName) {
 }
 
 /**
- * Obtém dados meteorológicos atuais para uma latitude/longitude específica,
- * utilizando a API de previsão da Open-Meteo.
- *
- * @async
- * @param {number} latitude - Latitude da localização.
- * @param {number} longitude - Longitude da localização.
- * @param {string} [timezone='auto'] - Timezone IANA (ex.: "America/Sao_Paulo").
- * @returns {Promise<Object|null>} Objeto JSON retornado pela API da Open-Meteo,
- *          ou null em caso de falha na requisição ou exceção de rede.
- * @throws {Error} Pode lançar erro interno se o response.ok for falso, tratado internamente no catch.
- *
- * @example
- * const weather = await getWeatherData(-23.55, -46.63, 'America/Sao_Paulo');
- * // weather.current_weather.temperature -> 25.0
+ * Obtém clima atual e previsão diária.
+ * @param {number} latitude
+ * @param {number} longitude
+ * @param {string} timezone
+ * @returns {Promise<Object|null>}
  */
 async function getWeatherData(latitude, longitude, timezone) {
     const weatherUrl =
-        `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&timezone=${encodeURIComponent(timezone || 'auto')}`;
+        `https://api.open-meteo.com/v1/forecast` +
+        `?latitude=${latitude}` +
+        `&longitude=${longitude}` +
+        `&current_weather=true` +
+        `&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,windspeed_10m_max,uv_index_max,relative_humidity_2m_max` +
+        `&timezone=${encodeURIComponent(timezone || 'auto')}`;
 
     try {
         const response = await fetch(weatherUrl);
@@ -71,50 +123,48 @@ async function getWeatherData(latitude, longitude, timezone) {
 }
 
 /**
- * Retorna o nome do arquivo SVG do ícone apropriado com base no código de tempo
- * (weathercode) da Open-Meteo e se é dia ou noite na localização.
- *
- * @param {number} weatherCode - Código de tempo retornado pela API (padrão WMO).
- * @param {boolean} isDay - Indica se é dia (true) ou noite (false) na localização.
- * @returns {string} Nome do arquivo SVG correspondente dentro de assets/weather-icons/svg.
- *
- * @example
- * const iconFile = getIconByWeatherCode(0, true);
- * // iconFile -> "wi-day-sunny.svg"
+ * Retorna o ícone SVG apropriado para o clima atual.
+ * @param {number} weatherCode
+ * @param {boolean} isDay
+ * @returns {string}
  */
 function getIconByWeatherCode(weatherCode, isDay) {
     const code = Number(weatherCode);
+    const { category } = mapWeatherCode(code);
 
-    if (code === 0) return isDay ? 'wi-day-sunny.svg' : 'wi-night-clear.svg';
-    if (code === 1 || code === 2) return isDay ? 'wi-day-sunny-overcast.svg' : 'wi-night-partly-cloudy.svg';
-    if (code === 3) return isDay ? 'wi-day-cloudy.svg' : 'wi-night-cloudy.svg';
-    if (code === 45 || code === 48) return isDay ? 'wi-day-fog.svg' : 'wi-night-fog.svg';
-    if (code === 51 || code === 53 || code === 55) return isDay ? 'wi-day-sprinkle.svg' : 'wi-night-sprinkle.svg';
-    if (code === 56 || code === 57) return isDay ? 'wi-day-sleet.svg' : 'wi-night-sleet.svg';
-    if (code === 61 || code === 63 || code === 65) return isDay ? 'wi-day-rain.svg' : 'wi-night-rain.svg';
-    if (code === 66 || code === 67) return isDay ? 'wi-day-rain-mix.svg' : 'wi-night-rain-mix.svg';
-    if (code === 71 || code === 73 || code === 75) return isDay ? 'wi-day-snow.svg' : 'wi-night-snow.svg';
-    if (code === 77) return 'wi-snowflake-cold.svg';
-    if (code === 80 || code === 81 || code === 82) return isDay ? 'wi-day-showers.svg' : 'wi-night-showers.svg';
-    if (code === 85 || code === 86) return isDay ? 'wi-day-snow-wind.svg' : 'wi-night-snow-wind.svg';
-    if (code === 95) return isDay ? 'wi-day-thunderstorm.svg' : 'wi-night-thunderstorm.svg';
-    if (code === 96 || code === 99) return isDay ? 'wi-day-sleet-storm.svg' : 'wi-night-sleet-storm.svg';
+    if (category === 'clear') {
+        return isDay ? 'wi-day-sunny.svg' : 'wi-night-clear.svg';
+    }
+
+    if (category === 'cloudy') {
+        return isDay ? 'wi-day-cloudy.svg' : 'wi-night-cloudy.svg';
+    }
+
+    if (category === 'fog') {
+        return isDay ? 'wi-day-fog.svg' : 'wi-night-fog.svg';
+    }
+
+    if (category === 'rain') {
+        return isDay ? 'wi-day-rain.svg' : 'wi-night-rain.svg';
+    }
+
+    if (category === 'snow') {
+        return isDay ? 'wi-day-snow.svg' : 'wi-night-snow.svg';
+    }
+
+    if (category === 'storm') {
+        return isDay ? 'wi-day-thunderstorm.svg' : 'wi-night-thunderstorm.svg';
+    }
 
     return 'wi-na.svg';
 }
 
 /**
- * Atualiza o elemento de imagem do ícone de clima na interface,
- * alterando o atributo src para o arquivo SVG informado.
- *
- * @param {string} iconFileName - Nome do arquivo SVG (ex.: "wi-day-sunny.svg").
- * @returns {void}
- *
- * @example
- * setWeatherIcon('wi-night-clear.svg');
+ * Atualiza o <img> do ícone de clima.
+ * @param {string} iconFileName
  */
 function setWeatherIcon(iconFileName) {
-    if (typeof document === 'undefined') return; // segurança para Jest / Node
+    if (typeof document === 'undefined') return;
 
     const iconElement = document.getElementById('weather-icon');
     if (!iconElement) return;
@@ -124,21 +174,9 @@ function setWeatherIcon(iconFileName) {
 }
 
 /**
- * Função de alto nível que integra geocodificação e previsão:
- * - Busca coordenadas da cidade
- * - Busca dados de clima para essas coordenadas
- * - Retorna um objeto consolidado para uso no front-end
- *
- * @async
- * @param {string} cityName - Nome da cidade digitado pelo usuário.
- * @returns {Promise<Object>} Objeto com dados consolidados ou um objeto { error: string }
- *          em caso de erro ou cidade não encontrada.
- *
- * @example
- * const result = await getWeatherByCity('Lisboa');
- * if (!result.error) {
- *   console.log(result.temperature);
- * }
+ * Função de alto nível que integra geocodificação e previsão.
+ * @param {string} cityName
+ * @returns {Promise<Object>}
  */
 async function getWeatherByCity(cityName) {
     const coordinates = await getCityCoordinates(cityName);
@@ -153,62 +191,312 @@ async function getWeatherByCity(cityName) {
         coordinates.timezone
     );
 
-    if (!weatherData || !weatherData.current_weather) {
+    if (!weatherData || !weatherData.current_weather || !weatherData.daily) {
         return { error: 'Erro ao obter dados do tempo' };
     }
 
     return {
-        city: coordinates.name,
-        temperature: weatherData.current_weather.temperature,
-        windSpeed: weatherData.current_weather.windspeed,
-        windDirection: weatherData.current_weather.winddirection,
-        weatherCode: weatherData.current_weather.weathercode,
-        time: weatherData.current_weather.time,
+        city: `${coordinates.name}${coordinates.country ? ', ' + coordinates.country : ''}`,
+        latitude: weatherData.latitude,
+        longitude: weatherData.longitude,
         timezone: weatherData.timezone,
-        isDay: weatherData.current_weather.is_day === 1
+        current: {
+            temperature: weatherData.current_weather.temperature,
+            windSpeed: weatherData.current_weather.windspeed,
+            windDirection: weatherData.current_weather.winddirection,
+            weatherCode: weatherData.current_weather.weathercode,
+            isDay: weatherData.current_weather.is_day === 1,
+            time: weatherData.current_weather.time,
+            humidity: weatherData.daily.relative_humidity_2m_max?.[0] ?? null,
+            precipitation: weatherData.daily.precipitation_sum?.[0] ?? 0
+        },
+        daily: weatherData.daily
     };
 }
 
 /**
- * Atualiza a interface HTML com os dados retornados por getWeatherByCity.
- * Esconde/mostra mensagens de erro e altera o ícone de clima.
- *
- * @param {Object} data - Objeto retornado por getWeatherByCity.
- * @param {string} [data.error] - Mensagem de erro, quando presente.
- * @returns {void}
+ * Gera recomendações com base nos dados retornados.
+ * @param {Object} weather
+ * @returns {Array<{icon: string, text: string}>}
+ */
+function buildAdvice(weather) {
+    const items = [];
+    if (!weather || !weather.current) return items;
+
+    const { current, daily } = weather;
+    const { category } = mapWeatherCode(current.weatherCode);
+    const todayIndex = 0;
+
+    const temp = current.temperature;
+    const precipToday = daily.precipitation_sum?.[todayIndex] ?? 0;
+    const precipProbToday = daily.precipitation_probability_max?.[todayIndex] ?? 0;
+    const maxWindToday = daily.windspeed_10m_max?.[todayIndex] ?? current.windSpeed;
+    const uvToday = daily.uv_index_max?.[todayIndex] ?? 0;
+
+    if (category === 'rain' || precipToday > 0 || precipProbToday >= 40) {
+        items.push({
+            icon: '☔',
+            text: 'Chuva prevista para hoje. Leve um guarda-chuva e proteja-se em locais cobertos.'
+        });
+    }
+
+    if (category === 'storm') {
+        items.push({
+            icon: '⛈️',
+            text: 'Tempestade prevista. Procure um local seguro, evite áreas abertas e regiões com muitas árvores.'
+        });
+    }
+
+    if (maxWindToday >= 40) {
+        items.push({
+            icon: '💨',
+            text: 'Ventos fortes na região. Evite ficar próximo a árvores ou estruturas instáveis.'
+        });
+    }
+
+    if (temp >= 30 || uvToday >= 6) {
+        items.push({
+            icon: '🌞',
+            text: 'Tempo muito quente e/ou UV elevado. Use protetor solar, óculos escuros e mantenha-se hidratado.'
+        });
+    }
+
+    if (temp <= 10) {
+        items.push({
+            icon: '🧣',
+            text: 'Temperaturas baixas. Vista roupas adequadas e proteja-se do frio.'
+        });
+    }
+
+    if (items.length === 0) {
+        items.push({
+            icon: '✅',
+            text: 'Condições relativamente estáveis para hoje. Ainda assim, acompanhe a previsão ao longo do dia.'
+        });
+    }
+
+    return items;
+}
+
+/**
+ * Preenche o card de clima atual.
+ * @param {Object} weather
+ */
+function renderCurrentWeather(weather) {
+    if (typeof document === 'undefined') return;
+    const { city, timezone, current } = weather;
+
+    const cityEl = document.getElementById('city-name');
+    const tzEl = document.getElementById('timezone-label');
+    const tempEl = document.getElementById('temp-value');
+    const windInfoEl = document.getElementById('wind-info');
+    const windSpeedEl = document.getElementById('wind-speed');
+    const windDirEl = document.getElementById('wind-direction');
+    const descEl = document.getElementById('weather-description');
+    const codeEl = document.getElementById('weather-code');
+    const periodEl = document.getElementById('day-period');
+    const timeEl = document.getElementById('weather-time');
+    const humidityEl = document.getElementById('humidity-value');
+    const precipEl = document.getElementById('precipitation-value');
+
+    if (cityEl) cityEl.textContent = city;
+    if (tzEl) tzEl.textContent = timezone || '';
+    if (tempEl) tempEl.textContent = current.temperature.toFixed(1);
+
+    const windInfo = `${current.windSpeed.toFixed(1)} km/h • ${current.windDirection.toFixed(0)}°`;
+    if (windInfoEl) windInfoEl.textContent = windInfo;
+    if (windSpeedEl) windSpeedEl.textContent = current.windSpeed.toFixed(1);
+    if (windDirEl) windDirEl.textContent = current.windDirection.toFixed(0);
+
+    const { label } = mapWeatherCode(current.weatherCode);
+    if (descEl) descEl.textContent = label;
+    if (codeEl) codeEl.textContent = String(current.weatherCode);
+
+    const periodText = current.isDay ? 'Dia' : 'Noite';
+    if (periodEl) periodEl.textContent = periodText;
+    if (timeEl) timeEl.textContent = current.time;
+
+    if (humidityEl) {
+        if (current.humidity != null) {
+            humidityEl.textContent = `${current.humidity.toFixed(0)}%`;
+        } else {
+            humidityEl.textContent = '‑';
+        }
+    }
+
+    if (precipEl) {
+        precipEl.textContent = `${current.precipitation.toFixed(1)} mm`;
+    }
+
+    const iconFile = getIconByWeatherCode(current.weatherCode, current.isDay);
+    setWeatherIcon(iconFile);
+
+    applyTheme(current.weatherCode, current.isDay);
+
+    const adviceList = document.getElementById('advice-list');
+    if (adviceList) {
+        adviceList.innerHTML = '';
+        const adviceItems = buildAdvice(weather);
+        adviceItems.forEach(item => {
+            const li = document.createElement('li');
+            li.className = 'advice-item';
+            li.innerHTML = `<span class="advice-icon">${item.icon}</span><span class="advice-text">${item.text}</span>`;
+            adviceList.appendChild(li);
+        });
+    }
+}
+
+/**
+ * Monta a lista de previsão (até FORECAST_DAYS).
+ * @param {Object} daily
+ */
+function renderForecast(daily) {
+    if (typeof document === 'undefined') return;
+
+    const listEl = document.getElementById('forecast-list');
+    const selectedSection = document.getElementById('selected-day');
+
+    if (!listEl || !selectedSection) return;
+
+    listEl.innerHTML = '';
+    selectedSection.classList.add('hidden');
+
+    const days = daily.time || [];
+    const total = Math.min(days.length, FORECAST_DAYS);
+
+    for (let i = 0; i < total; i++) {
+        const dateStr = daily.time[i];
+        const max = daily.temperature_2m_max?.[i];
+        const min = daily.temperature_2m_min?.[i];
+        const wCode = daily.weathercode?.[i];
+        const precip = daily.precipitation_sum?.[i] ?? 0;
+        const wind = daily.windspeed_10m_max?.[i] ?? 0;
+
+        const dateObj = new Date(dateStr + 'T00:00:00');
+        const weekdayFormatter = new Intl.DateTimeFormat('pt-BR', { weekday: 'long' });
+        const dayFormatter = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' });
+        const weekday = weekdayFormatter.format(dateObj);
+        const dayLabel = dayFormatter.format(dateObj);
+
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'forecast-day';
+        item.dataset.index = String(i);
+
+        const { label, category } = mapWeatherCode(wCode);
+        const dayIconFile = getIconByWeatherCode(wCode, true); // usa versão diurna como ícone padrão
+
+        item.innerHTML = `
+    <div class="forecast-date">
+        <div class="forecast-date-main">
+            <img class="forecast-icon" src="assets/weather-icons/svg/${dayIconFile}" alt="${label}">
+            <div class="forecast-date-text">
+                <span class="forecast-weekday">${weekday.charAt(0).toUpperCase() + weekday.slice(1)}</span>
+                <span class="forecast-desc">${dayLabel}</span>
+            </div>
+        </div>
+    </div>
+    <div class="forecast-temps">
+        <span class="max">${max != null ? max.toFixed(0) : '‑'}°</span>
+        <span class="min">${min != null ? min.toFixed(0) : '‑'}°</span>
+    </div>
+    <div class="forecast-precip">
+        💧 ${precip.toFixed(1)} mm
+    </div>
+    <div class="forecast-wind">
+        💨 ${wind.toFixed(1)} km/h
+    </div>
+`;
+
+        item.addEventListener('click', () => {
+            document.querySelectorAll('.forecast-day').forEach(el => el.classList.remove('selected'));
+            item.classList.add('selected');
+            renderSelectedDay(i, daily);
+        });
+
+        listEl.appendChild(item);
+    }
+
+    if (days.length < FORECAST_DAYS) {
+        console.info(`A API retornou apenas ${days.length} dias de previsão.`);
+    }
+}
+
+/**
+ * Mostra o detalhe do dia selecionado.
+ * @param {number} index
+ * @param {Object} daily
+ */
+function renderSelectedDay(index, daily) {
+    if (typeof document === 'undefined') return;
+
+    const labelEl = document.getElementById('selected-day-label');
+    const maxEl = document.getElementById('selected-max-temp');
+    const minEl = document.getElementById('selected-min-temp');
+    const descEl = document.getElementById('selected-description');
+    const humEl = document.getElementById('selected-humidity');
+    const windEl = document.getElementById('selected-wind');
+    const precEl = document.getElementById('selected-precipitation');
+    const section = document.getElementById('selected-day');
+
+    if (!labelEl || !maxEl || !minEl || !descEl || !humEl || !windEl || !precEl || !section) return;
+
+    const dateStr = daily.time[index];
+    const dateObj = new Date(dateStr + 'T00:00:00');
+    const formatter = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+
+    labelEl.textContent = formatter.format(dateObj);
+
+    const max = daily.temperature_2m_max?.[index];
+    const min = daily.temperature_2m_min?.[index];
+    const wCode = daily.weathercode?.[index];
+    const precip = daily.precipitation_sum?.[index] ?? 0;
+    const wind = daily.windspeed_10m_max?.[index] ?? 0;
+    const humidity = daily.relative_humidity_2m_max?.[index] ?? null;
+
+    maxEl.textContent = max != null ? max.toFixed(1) : '‑';
+    minEl.textContent = min != null ? min.toFixed(1) : '‑';
+
+    const { label } = mapWeatherCode(wCode);
+    descEl.textContent = label;
+
+    humEl.textContent = humidity != null ? `${humidity.toFixed(0)}%` : '‑';
+    windEl.textContent = `${wind.toFixed(1)} km/h`;
+    precEl.textContent = `${precip.toFixed(1)} mm`;
+
+    section.classList.remove('hidden');
+}
+
+/**
+ * Atualiza toda a interface com o objeto retornado por getWeatherByCity.
+ * @param {Object} data
  */
 function updateUI(data) {
-    if (typeof document === 'undefined') return; // segurança para Jest
+    if (typeof document === 'undefined') return;
 
     const weatherResult = document.getElementById('weather-result');
     const errorMessage = document.getElementById('error-message');
+    const errorText = document.getElementById('error-text');
+
+    if (!weatherResult || !errorMessage || !errorText) return;
 
     if (data.error) {
-        if (weatherResult) weatherResult.classList.add('hidden');
-        if (errorMessage) errorMessage.classList.remove('hidden');
-        setWeatherIcon('wi-na.svg');
+        weatherResult.classList.add('hidden');
+        errorMessage.classList.remove('hidden');
+        errorText.textContent = data.error;
+        applyTheme(3, true); // tema neutro nublado
         return;
     }
 
-    document.getElementById('city-name').textContent = data.city;
-    document.getElementById('temp-value').textContent = data.temperature;
-    document.getElementById('wind-speed').textContent = data.windSpeed;
-    document.getElementById('wind-direction').textContent = data.windDirection;
-    document.getElementById('weather-code').textContent = data.weatherCode;
-    document.getElementById('weather-time').textContent = data.time;
+    errorMessage.classList.add('hidden');
+    renderCurrentWeather(data);
+    renderForecast(data.daily);
 
-    const period = data.isDay ? 'Dia' : 'Noite';
-    const dayPeriodSpan = document.getElementById('day-period');
-    if (dayPeriodSpan) dayPeriodSpan.textContent = period;
-
-    const iconFile = getIconByWeatherCode(data.weatherCode, data.isDay);
-    setWeatherIcon(iconFile);
-
-    if (weatherResult) weatherResult.classList.remove('hidden');
-    if (errorMessage) errorMessage.classList.add('hidden');
+    weatherResult.classList.remove('hidden');
 }
 
-// Listener do formulário – apenas no navegador
+// ---------- Inicialização / Formulário ----------
+
 if (typeof document !== 'undefined') {
     document.addEventListener('DOMContentLoaded', () => {
         const form = document.getElementById('weather-form');
@@ -228,15 +516,36 @@ if (typeof document !== 'undefined') {
             const weatherData = await getWeatherByCity(cityName);
             updateUI(weatherData);
         });
+        // Seletor de idiomas – por enquanto só registra o idioma escolhido em localStorage
+        const langButtons = document.querySelectorAll('.lang-btn');
+        langButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const lang = btn.dataset.lang;
+                if (lang) {
+                    localStorage.setItem('clima_lang', lang);
+                    console.info(`Idioma selecionado: ${lang} (tradução ainda não implementada)`);
+                    // Aqui no futuro você pode chamar uma função applyTranslations(lang)
+                }
+            });
+        });
+
+        // Carrega idioma salvo (para uso futuro)
+        const savedLang = localStorage.getItem('clima_lang');
+        if (savedLang) {
+            console.info(`Idioma carregado: ${savedLang}`);
+        }
     });
 }
 
-// Exporta funções para testes com Jest (não afeta uso no navegador)
+// ---------- Exports para Jest ----------
+
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         getCityCoordinates,
         getWeatherData,
         getWeatherByCity,
-        getIconByWeatherCode
+        getIconByWeatherCode,
+        mapWeatherCode,
+        buildAdvice
     };
 }

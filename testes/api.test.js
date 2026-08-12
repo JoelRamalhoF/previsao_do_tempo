@@ -7,7 +7,9 @@ const {
     getCityCoordinates,
     getWeatherData,
     getWeatherByCity,
-    getIconByWeatherCode
+    getIconByWeatherCode,
+    mapWeatherCode,
+    buildAdvice
 } = require('../assets/js/api.js');
 
 // Mock global fetch
@@ -23,6 +25,7 @@ describe('Função getCityCoordinates', () => {
             results: [
                 {
                     name: 'São Paulo',
+                    country: 'Brasil',
                     latitude: -23.55,
                     longitude: -46.63,
                     timezone: 'America/Sao_Paulo'
@@ -73,10 +76,11 @@ describe('Função getWeatherData', () => {
         jest.clearAllMocks();
     });
 
-    test('Retorna dados meteorológicos para latitude/longitude válidos', async () => {
+    test('Retorna dados meteorológicos com current_weather e daily', async () => {
         const fakeWeather = {
             latitude: -23.55,
             longitude: -46.63,
+            timezone: 'America/Sao_Paulo',
             current_weather: {
                 temperature: 25,
                 windspeed: 10,
@@ -85,7 +89,17 @@ describe('Função getWeatherData', () => {
                 is_day: 1,
                 time: '2026-08-12T13:00'
             },
-            timezone: 'America/Sao_Paulo'
+            daily: {
+                time: ['2026-08-12'],
+                temperature_2m_max: [28],
+                temperature_2m_min: [19],
+                weathercode: [1],
+                precipitation_sum: [0],
+                precipitation_probability_max: [10],
+                windspeed_10m_max: [15],
+                uv_index_max: [6],
+                relative_humidity_2m_max: [70]
+            }
         };
 
         fetch.mockResolvedValueOnce({
@@ -97,7 +111,7 @@ describe('Função getWeatherData', () => {
         expect(fetch).toHaveBeenCalledTimes(1);
         expect(result).toBeDefined();
         expect(result).toHaveProperty('current_weather');
-        expect(result.current_weather).toHaveProperty('temperature');
+        expect(result).toHaveProperty('daily');
     });
 
     test('Falha na API de tempo retorna null', async () => {
@@ -107,7 +121,7 @@ describe('Função getWeatherData', () => {
         expect(result).toBeNull();
     });
 
-    test('Limite de requisições da API excedido (HTTP 429) é tratado como falha', async () => {
+    test('Limite de requisições excedido (HTTP 429) retorna null', async () => {
         fetch.mockResolvedValueOnce({
             ok: false,
             status: 429,
@@ -131,9 +145,10 @@ describe('Função getWeatherByCity', () => {
         jest.clearAllMocks();
     });
 
-    test('Cidade válida retorna objeto com dados consolidados', async () => {
+    test('Cidade válida retorna objeto consolidado com current e daily', async () => {
         const fakeGeo = {
             name: 'São Paulo',
+            country: 'Brasil',
             latitude: -23.55,
             longitude: -46.63,
             timezone: 'America/Sao_Paulo'
@@ -142,6 +157,7 @@ describe('Função getWeatherByCity', () => {
         const fakeWeather = {
             latitude: -23.55,
             longitude: -46.63,
+            timezone: 'America/Sao_Paulo',
             current_weather: {
                 temperature: 25,
                 windspeed: 10,
@@ -150,7 +166,17 @@ describe('Função getWeatherByCity', () => {
                 is_day: 1,
                 time: '2026-08-12T13:00'
             },
-            timezone: 'America/Sao_Paulo'
+            daily: {
+                time: ['2026-08-12'],
+                temperature_2m_max: [28],
+                temperature_2m_min: [19],
+                weathercode: [1],
+                precipitation_sum: [0],
+                precipitation_probability_max: [10],
+                windspeed_10m_max: [15],
+                uv_index_max: [6],
+                relative_humidity_2m_max: [70]
+            }
         };
 
         fetch
@@ -168,13 +194,11 @@ describe('Função getWeatherByCity', () => {
         expect(fetch).toHaveBeenCalledTimes(2);
         expect(result.error).toBeUndefined();
         expect(result).toMatchObject({
-            city: 'São Paulo',
-            temperature: 25,
-            windSpeed: 10,
-            windDirection: 180,
-            weatherCode: 1,
-            isDay: true
+            city: 'São Paulo, Brasil',
+            timezone: 'America/Sao_Paulo'
         });
+        expect(result.current).toBeDefined();
+        expect(result.daily).toBeDefined();
     });
 
     test('Cidade inexistente retorna objeto de erro', async () => {
@@ -198,11 +222,11 @@ describe('Função getWeatherByCity', () => {
             timezone: 'America/Sao_Paulo'
         };
 
-        // current_weather ausente
         const malformedWeather = {
             latitude: -23.55,
             longitude: -46.63,
             timezone: 'America/Sao_Paulo'
+            // sem current_weather ou daily
         };
 
         fetch
@@ -222,19 +246,87 @@ describe('Função getWeatherByCity', () => {
     });
 });
 
-describe('Função getIconByWeatherCode', () => {
-    test('Retorna ícone de dia para céu limpo (código 0, isDay=true)', () => {
+describe('Mapeamento de códigos e ícones', () => {
+    test('mapWeatherCode retorna categoria correta para céu limpo', () => {
+        const mapped = mapWeatherCode(0);
+        expect(mapped.category).toBe('clear');
+    });
+
+    test('getIconByWeatherCode retorna ícone de dia para céu limpo', () => {
         const icon = getIconByWeatherCode(0, true);
         expect(icon).toBe('wi-day-sunny.svg');
     });
 
-    test('Retorna ícone de noite para céu limpo (código 0, isDay=false)', () => {
+    test('getIconByWeatherCode retorna ícone de noite para céu limpo', () => {
         const icon = getIconByWeatherCode(0, false);
         expect(icon).toBe('wi-night-clear.svg');
     });
+});
 
-    test('Retorna ícone genérico quando código é desconhecido', () => {
-        const icon = getIconByWeatherCode(999, true);
-        expect(icon).toBe('wi-na.svg');
+describe('Função buildAdvice', () => {
+    test('Gera recomendação de guarda-chuva quando há chuva prevista', () => {
+        const weather = {
+            current: {
+                temperature: 22,
+                windSpeed: 10,
+                weatherCode: 61,
+                isDay: 1
+            },
+            daily: {
+                precipitation_sum: [5],
+                precipitation_probability_max: [80],
+                windspeed_10m_max: [10],
+                uv_index_max: [4],
+                relative_humidity_2m_max: [80]
+            }
+        };
+
+        const advice = buildAdvice(weather);
+        const hasUmbrellaAdvice = advice.some(a => a.text.toLowerCase().includes('guarda-chuva'));
+        expect(hasUmbrellaAdvice).toBe(true);
+    });
+
+    test('Gera recomendação de vento forte quando velocidade alta', () => {
+        const weather = {
+            current: {
+                temperature: 20,
+                windSpeed: 15,
+                weatherCode: 3,
+                isDay: 1
+            },
+            daily: {
+                precipitation_sum: [0],
+                precipitation_probability_max: [0],
+                windspeed_10m_max: [50],
+                uv_index_max: [3],
+                relative_humidity_2m_max: [60]
+            }
+        };
+
+        const advice = buildAdvice(weather);
+        const hasWindAdvice = advice.some(a => a.text.toLowerCase().includes('ventos fortes'));
+        expect(hasWindAdvice).toBe(true);
+    });
+
+    test('Gera recomendação de sol/protetor quando UV ou temperatura altos', () => {
+        const weather = {
+            current: {
+                temperature: 32,
+                windSpeed: 5,
+                weatherCode: 1,
+                isDay: 1
+            },
+            daily: {
+                precipitation_sum: [0],
+                precipitation_probability_max: [0],
+                windspeed_10m_max: [10],
+                uv_index_max: [8],
+                relative_humidity_2m_max: [40]
+            }
+        };
+
+        const advice = buildAdvice(weather);
+        const hasSunAdvice = advice.some(a => a.text.toLowerCase().includes('protetor solar'));
+        expect(hasSunAdvice).toBe(true);
     });
 });

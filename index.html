@@ -1,60 +1,175 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Previsão do Tempo</title>
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
-<body>
-    <div class="container">
-        <header>
+
+<body class="theme-default">
+    <div class="app-shell">
+        <header class="app-header">
             <h1>Previsão do Tempo</h1>
+            <p class="app-subtitle">Clima atual e previsão para os próximos 7 dias</p>
         </header>
+        <nav class="language-switcher" aria-label="Selecionar idioma">
+            <button class="lang-btn" data-lang="pt-BR" title="Português (Brasil)">🇧🇷</button>
+            <button class="lang-btn" data-lang="en" title="English">🇺🇸</button>
+            <button class="lang-btn" data-lang="es" title="Español">🇪🇸</button>
+            <button class="lang-btn" data-lang="it" title="Italiano">🇮🇹</button>
+            <button class="lang-btn" data-lang="fr" title="Français">🇫🇷</button>
+            <button class="lang-btn" data-lang="de" title="Deutsch">🇩🇪</button>
+            <button class="lang-btn" data-lang="ru" title="Русский">🇷🇺</button>
+            <button class="lang-btn" data-lang="ja" title="日本語">🇯🇵</button>
+            <button class="lang-btn" data-lang="ko" title="한국어">🇰🇷</button>
+            <button class="lang-btn" data-lang="zh" title="中文">🇨🇳</button>
+        </nav>
 
-        <main>
-            <form id="weather-form">
-                <div class="input-group">
-                    <input
-                        type="text"
-                        id="city-input"
-                        placeholder="Digite o nome da cidade"
-                        required
-                    >
-                    <button type="submit">Buscar</button>
-                </div>
-            </form>
-
-            <div id="weather-result" class="weather-result hidden">
-                <h2 id="city-name"></h2>
-
-                <div class="temperature">
-                    <img
-                        id="weather-icon"
-                        src="assets/weather-icons/svg/wi-na.svg"
-                        alt="Ícone do clima"
-                    >
-                    <div class="temp-values">
-                        <span id="temp-value"></span>
-                        <span class="temp-unit">°C</span>
+        <main class="app-main">
+            <!-- Busca -->
+            <section class="search-section">
+                <form id="weather-form" class="search-form">
+                    <div class="input-wrapper">
+                        <input type="text" id="city-input" class="search-input"
+                            placeholder="Digite o nome da cidade (ex.: São Paulo, Lisboa, Tóquio)" required>
                     </div>
-                </div>
+                    <button type="submit" class="btn btn-primary">Buscar previsão</button>
+                </form>
+            </section>
 
-                <div class="weather-info">
-                    <p><strong>Vento:</strong> <span id="wind-speed"></span> km/h</p>
-                    <p><strong>Direção do vento:</strong> <span id="wind-direction"></span>°</p>
-                    <p><strong>Código do tempo:</strong> <span id="weather-code"></span></p>
-                    <p><strong>Período:</strong> <span id="day-period"></span></p>
-                    <p><strong>Data/hora:</strong> <span id="weather-time"></span></p>
-                </div>
-            </div>
+            <!-- Mensagem de erro -->
+            <section id="error-message" class="error-message hidden">
+                <p id="error-text">Cidade não encontrada. Tente novamente.</p>
+            </section>
 
-            <div id="error-message" class="error-message hidden">
-                <p>Cidade não encontrada. Tente novamente.</p>
-            </div>
+            <!-- Resultado principal -->
+            <section id="weather-result" class="weather-layout hidden">
+                <!-- Bloco hoje -->
+                <article class="card current-weather">
+                    <header class="current-header">
+                        <div class="location-info">
+                            <h2 id="city-name" class="city-name"></h2>
+                            <p class="timezone" id="timezone-label"></p>
+                            <p class="period-label">
+                                <span id="day-period"></span>
+                                <span class="dot-separator">•</span>
+                                <span id="weather-description"></span>
+                            </p>
+                            <p class="time-label">
+                                Atualizado em <span id="weather-time"></span>
+                            </p>
+                        </div>
+                        <div class="current-main">
+                            <div class="current-icon">
+                                <img id="weather-icon" src="assets/weather-icons/svg/wi-na.svg" alt="Ícone do clima">
+                            </div>
+                            <div class="current-temp">
+                                <span id="temp-value" class="temp-value"></span>
+                                <span class="temp-unit">°C</span>
+                            </div>
+                        </div>
+                    </header>
+
+                    <!-- Detalhes principais -->
+                    <div class="current-details">
+                        <div class="detail-card">
+                            <div class="detail-icon">
+                                <img src="assets/weather-icons/svg/wi-humidity.svg" alt="Umidade">
+                            </div>
+                            <div class="detail-text">
+                                <span class="detail-label">Umidade</span>
+                                <span id="humidity-value" class="detail-value">‑</span>
+                            </div>
+                        </div>
+
+                        <div class="detail-card">
+                            <div class="detail-icon">
+                                <img src="assets/weather-icons/svg/wi-strong-wind.svg" alt="Vento">
+                            </div>
+                            <div class="detail-text">
+                                <span class="detail-label">Vento</span>
+                                <span id="wind-info" class="detail-value">‑</span>
+                            </div>
+                        </div>
+
+                        <div class="detail-card">
+                            <div class="detail-icon">
+                                <img src="assets/weather-icons/svg/wi-raindrops.svg" alt="Precipitação">
+                            </div>
+                            <div class="detail-text">
+                                <span class="detail-label">Precipitação</span>
+                                <span id="precipitation-value" class="detail-value">0 mm</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mensagens inteligentes -->
+                    <section class="advice-section">
+                        <h3 class="section-title">Recomendações para hoje</h3>
+                        <ul id="advice-list" class="advice-list">
+                            <!-- Itens preenchidos via JS -->
+                        </ul>
+                    </section>
+                </article>
+
+                <!-- Bloco previsão 7 dias -->
+                <article class="card forecast-card">
+                    <header class="forecast-header">
+                        <div>
+                            <h3 class="section-title">Próximos 7 dias</h3>
+                            <p class="section-subtitle">Clique em um dia para ver mais detalhes</p>
+                        </div>
+                    </header>
+
+                    <!-- Lista de dias com scroll -->
+                    <div id="forecast-list" class="forecast-list">
+                        <!-- Preenchido via JS -->
+                    </div>
+
+                    <!-- Detalhe do dia selecionado -->
+                    <section id="selected-day" class="selected-day hidden">
+                        <h4 id="selected-day-label" class="selected-day-title"></h4>
+                        <div class="selected-day-grid">
+                            <div class="selected-temp">
+                                <span class="badge">Temperatura</span>
+                                <p>
+                                    Máx: <span id="selected-max-temp">‑</span>°C<br>
+                                    Mín: <span id="selected-min-temp">‑</span>°C
+                                </p>
+                            </div>
+                            <div class="selected-extra">
+                                <span class="badge">Detalhes</span>
+                                <p>
+                                    Condição: <span id="selected-description">‑</span><br>
+                                    Umidade: <span id="selected-humidity">‑</span><br>
+                                    Vento: <span id="selected-wind">‑</span><br>
+                                    Precipitação: <span id="selected-precipitation">‑</span>
+                                </p>
+                            </div>
+                        </div>
+                    </section>
+                </article>
+            </section>
         </main>
+
+        <footer class="app-footer">
+            <footer class="app-footer">
+                <p>Dados meteorológicos fornecidos por <a href="https://open-meteo.com/" target="_blank"
+                        rel="noreferrer">Open-Meteo</a>.</p>
+                <p class="footer-author">
+                    Feito por <strong>Joel Ramalho Filho</strong> - 2026<br>
+                    Github: <a href="https://github.com/JoelRamalhoF" target="_blank"
+                        rel="noreferrer">github.com/JoelRamalhoF</a><br>
+                    Portfólio: <a href="https://joelramalhof.github.io/portfolio/" target="_blank"
+                        rel="noreferrer">joelramalhof.github.io/portfolio/</a>
+                </p>
+            </footer>
+        </footer>
     </div>
 
     <script src="assets/js/api.js"></script>
 </body>
+
 </html>
