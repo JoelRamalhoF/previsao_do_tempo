@@ -1,5 +1,7 @@
+// Função para obter coordenadas da cidade (API de geocodificação Open-Meteo)
 async function getCityCoordinates(cityName) {
-    const geocodingUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1&language=pt&format=json`;
+    const geocodingUrl =
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1&language=pt&format=json`;
 
     try {
         const response = await fetch(geocodingUrl);
@@ -15,8 +17,10 @@ async function getCityCoordinates(cityName) {
     }
 }
 
+// Função para obter dados meteorológicos (API Open-Meteo)
 async function getWeatherData(latitude, longitude, timezone) {
-    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&timezone=${encodeURIComponent(timezone || 'auto')}`;
+    const weatherUrl =
+        `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&timezone=${encodeURIComponent(timezone || 'auto')}`;
 
     try {
         const response = await fetch(weatherUrl);
@@ -29,6 +33,7 @@ async function getWeatherData(latitude, longitude, timezone) {
     }
 }
 
+// Escolhe o SVG com base no weathercode + dia/noite
 function getIconByWeatherCode(weatherCode, isDay) {
     const code = Number(weatherCode);
 
@@ -50,7 +55,10 @@ function getIconByWeatherCode(weatherCode, isDay) {
     return 'wi-na.svg';
 }
 
+// Atualiza o <img> do ícone
 function setWeatherIcon(iconFileName) {
+    if (typeof document === 'undefined') return; // segurança para Jest
+
     const iconElement = document.getElementById('weather-icon');
     if (!iconElement) return;
 
@@ -58,6 +66,7 @@ function setWeatherIcon(iconFileName) {
     iconElement.alt = iconFileName.replace('.svg', '');
 }
 
+// Função principal que consulta coordenadas + clima
 async function getWeatherByCity(cityName) {
     const coordinates = await getCityCoordinates(cityName);
 
@@ -87,13 +96,16 @@ async function getWeatherByCity(cityName) {
     };
 }
 
+// Atualiza a interface (DOM)
 function updateUI(data) {
+    if (typeof document === 'undefined') return; // segurança para Jest
+
     const weatherResult = document.getElementById('weather-result');
     const errorMessage = document.getElementById('error-message');
 
     if (data.error) {
-        weatherResult.classList.add('hidden');
-        errorMessage.classList.remove('hidden');
+        if (weatherResult) weatherResult.classList.add('hidden');
+        if (errorMessage) errorMessage.classList.remove('hidden');
         setWeatherIcon('wi-na.svg');
         return;
     }
@@ -116,20 +128,35 @@ function updateUI(data) {
     errorMessage.classList.add('hidden');
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('weather-form');
-    const cityInput = document.getElementById('city-input');
+// Listener do formulário – só no navegador
+if (typeof document !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('weather-form');
+        const cityInput = document.getElementById('city-input');
 
-    form.addEventListener('submit', async (event) => {
-        event.preventDefault();
+        if (!form || !cityInput) return;
 
-        const cityName = cityInput.value.trim();
-        if (!cityName) {
-            alert('Por favor, digite o nome de uma cidade');
-            return;
-        }
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
 
-        const weatherData = await getWeatherByCity(cityName);
-        updateUI(weatherData);
+            const cityName = cityInput.value.trim();
+            if (!cityName) {
+                alert('Por favor, digite o nome de uma cidade');
+                return;
+            }
+
+            const weatherData = await getWeatherByCity(cityName);
+            updateUI(weatherData);
+        });
     });
-});
+}
+
+// Exporta funções para testes com Jest (não afeta uso no navegador)
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        getCityCoordinates,
+        getWeatherData,
+        getWeatherByCity,
+        getIconByWeatherCode
+    };
+}
