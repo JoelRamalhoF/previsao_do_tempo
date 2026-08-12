@@ -624,6 +624,7 @@ body.theme-night .current-icon img {
         grid-template-columns: 1fr;
     }
 }
+
 .language-switcher {
     display: flex;
     justify-content: center;
@@ -654,4 +655,129 @@ body.theme-night .current-icon img {
 /* No modo noturno, mantém o contraste */
 body.theme-night .lang-btn:hover {
     filter: drop-shadow(0 0 4px rgba(148,163,184,0.65));
+}
+
+/* Seção de comparação de cidades */
+
+.compare-section {
+    margin-top: 10px;
+    padding: 16px;
+    border-radius: 16px;
+    background: rgba(248, 250, 252, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.compare-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.compare-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.compare-city-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.04);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    font-size: 13px;
+}
+
+.remove-city-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--danger);
+    line-height: 1;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.remove-city-btn:hover {
+    transform: scale(1.1);
+}
+
+.compare-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.compare-result {
+    margin-top: 10px;
+}
+
+.compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.compare-table th,
+.compare-table td {
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.compare-table th {
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+}
+
+.compare-table td {
+    color: var(--text-primary);
+}
+
+.compare-table tbody tr:hover {
+    background: rgba(148, 163, 184, 0.06);
+}
+
+.compare-table .weather-cell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.compare-table .weather-icon {
+    width: 20px;
+    height: 20px;
+}
+
+/* No modo noturno */
+
+body.theme-night .compare-section {
+    background: rgba(15, 23, 42, 0.9);
+    border-color: rgba(30, 64, 175, 0.5);
+}
+
+body.theme-night .compare-city-item {
+    background: rgba(15, 23, 42, 0.6);
+    border-color: rgba(30, 64, 175, 0.5);
+}
+
+body.theme-night .compare-table th {
+    color: #9ca3af;
+}
+
+body.theme-night .compare-table td {
+    color: #e5e7eb;
+}
+
+body.theme-night .compare-table tbody tr:hover {
+    background: rgba(30, 64, 175, 0.25);
 }

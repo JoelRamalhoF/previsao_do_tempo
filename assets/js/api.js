@@ -4,6 +4,7 @@
  * - Clima atual e previsão diária (Open-Meteo Forecast API)
  * - Mapeamento de códigos de tempo para ícones e descrições
  * - Atualização dinâmica da interface, cores e mensagens
+ * - Comparação de até 3 cidades
  */
 
 const FORECAST_DAYS = 7;
@@ -495,6 +496,153 @@ function updateUI(data) {
     weatherResult.classList.remove('hidden');
 }
 
+// ========== Comparação de cidades ==========
+
+/**
+ * Array de cidades para comparação.
+ * @type {string[]}
+ */
+let comparisonCities = [];
+
+/**
+ * Adiciona uma cidade à lista de comparação.
+ * @param {string} cityName
+ */
+function addCityToComparison(cityName) {
+    if (comparisonCities.length >= 3) {
+        alert('Você só pode comparar até 3 cidades.');
+        return;
+    }
+
+    const normalized = cityName.trim();
+    if (!normalized) return;
+
+    // Evita duplicatas exatas
+    if (comparisonCities.some(c => c.toLowerCase() === normalized.toLowerCase())) {
+        alert('Essa cidade já está na lista de comparação.');
+        return;
+    }
+
+    comparisonCities.push(normalized);
+    renderComparisonList();
+}
+
+/**
+ * Remove uma cidade da lista de comparação.
+ * @param {number} index
+ */
+function removeCityFromComparison(index) {
+    if (index < 0 || index >= comparisonCities.length) return;
+    comparisonCities.splice(index, 1);
+    renderComparisonList();
+}
+
+/**
+ * Renderiza a lista de cidades adicionadas para comparação.
+ */
+function renderComparisonList() {
+    if (typeof document === 'undefined') return;
+
+    const listEl = document.getElementById('compare-list');
+    const addBtn = document.getElementById('add-city-btn');
+
+    if (!listEl) return;
+
+    listEl.innerHTML = '';
+
+    comparisonCities.forEach((city, index) => {
+        const item = document.createElement('div');
+        item.className = 'compare-city-item';
+        item.innerHTML = `
+            <span>${city}</span>
+            <button class="remove-city-btn" type="button" aria-label="Remover ${city}" title="Remover">
+                ✕
+            </button>
+        `;
+
+        const removeBtn = item.querySelector('.remove-city-btn');
+        removeBtn.addEventListener('click', () => {
+            removeCityFromComparison(index);
+        });
+
+        listEl.appendChild(item);
+    });
+
+    if (addBtn) {
+        addBtn.disabled = comparisonCities.length >= 3;
+        addBtn.style.opacity = comparisonCities.length >= 3 ? '0.6' : '1';
+        addBtn.style.cursor = comparisonCities.length >= 3 ? 'not-allowed' : 'pointer';
+    }
+}
+
+/**
+ * Compara as cidades atualmente na lista.
+ */
+async function compareCities() {
+    if (typeof document === 'undefined') return;
+
+    const resultSection = document.getElementById('compare-result');
+    const tableBody = document.getElementById('compare-table-body');
+
+    if (!resultSection || !tableBody) return;
+
+    if (comparisonCities.length === 0) {
+        alert('Adicione pelo menos uma cidade para comparar.');
+        return;
+    }
+
+    resultSection.classList.add('hidden');
+    tableBody.innerHTML = '';
+
+    // Busca clima de cada cidade
+    const promises = comparisonCities.map(city => getWeatherByCity(city));
+    const results = await Promise.all(promises);
+
+    // Renderiza tabela
+    results.forEach((data, index) => {
+        const row = document.createElement('tr');
+
+        if (data.error) {
+            row.innerHTML = `
+                <td>${comparisonCities[index]}</td>
+                <td colspan="4" style="color: var(--danger);">Erro ao obter dados: ${data.error}</td>
+            `;
+        } else {
+            const { city, current } = data;
+            const { label } = mapWeatherCode(current.weatherCode);
+            const iconFile = getIconByWeatherCode(current.weatherCode, current.isDay);
+
+            row.innerHTML = `
+                <td>${city}</td>
+                <td class="weather-cell">
+                    <img class="weather-icon" src="assets/weather-icons/svg/${iconFile}" alt="${label}">
+                    <span>${label}</span>
+                </td>
+                <td>${current.temperature.toFixed(1)}°C</td>
+                <td>${current.humidity != null ? current.humidity.toFixed(0) + '%' : '‑'}</td>
+                <td>${current.windSpeed.toFixed(1)} km/h</td>
+            `;
+        }
+
+        tableBody.appendChild(row);
+    });
+
+    resultSection.classList.remove('hidden');
+}
+
+/**
+ * Limpa toda a lista de comparação.
+ */
+function clearComparison() {
+    comparisonCities = [];
+    renderComparisonList();
+
+    const resultSection = document.getElementById('compare-result');
+    if (resultSection) {
+        resultSection.classList.add('hidden');
+    }
+}
+
 // ---------- Inicialização / Formulário ----------
 
 if (typeof document !== 'undefined') {
@@ -516,6 +664,7 @@ if (typeof document !== 'undefined') {
             const weatherData = await getWeatherByCity(cityName);
             updateUI(weatherData);
         });
+
         // Seletor de idiomas – por enquanto só registra o idioma escolhido em localStorage
         const langButtons = document.querySelectorAll('.lang-btn');
         langButtons.forEach(btn => {
@@ -533,6 +682,40 @@ if (typeof document !== 'undefined') {
         const savedLang = localStorage.getItem('clima_lang');
         if (savedLang) {
             console.info(`Idioma carregado: ${savedLang}`);
+        }
+
+        // ---------- Comparação de cidades ----------
+
+        const compareForm = document.getElementById('compare-form');
+        const compareCityInput = document.getElementById('compare-city-input');
+        const compareBtn = document.getElementById('compare-btn');
+        const clearCompareBtn = document.getElementById('clear-compare-btn');
+
+        if (compareForm && compareCityInput) {
+            compareForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+
+                const cityName = compareCityInput.value.trim();
+                if (!cityName) {
+                    alert('Por favor, digite o nome de uma cidade');
+                    return;
+                }
+
+                addCityToComparison(cityName);
+                compareCityInput.value = '';
+            });
+        }
+
+        if (compareBtn) {
+            compareBtn.addEventListener('click', () => {
+                compareCities();
+            });
+        }
+
+        if (clearCompareBtn) {
+            clearCompareBtn.addEventListener('click', () => {
+                clearComparison();
+            });
         }
     });
 }

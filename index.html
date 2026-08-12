@@ -152,20 +152,58 @@
                     </section>
                 </article>
             </section>
+
+            <!-- Seção de comparação de cidades -->
+            <section class="compare-section">
+                <h3 class="section-title">Compare até 3 cidades</h3>
+                <p class="section-subtitle">Adicione cidades e veja o clima atual de cada uma lado a lado</p>
+
+                <form id="compare-form" class="compare-form">
+                    <div class="input-wrapper">
+                        <input type="text" id="compare-city-input" class="search-input"
+                            placeholder="Digite o nome de uma cidade para comparar" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="add-city-btn">Adicionar</button>
+                </form>
+
+                <div id="compare-list" class="compare-list">
+                    <!-- Cidades adicionadas aparecem aqui -->
+                </div>
+
+                <div class="compare-actions">
+                    <button id="compare-btn" class="btn btn-primary">Comparar Climas</button>
+                    <button id="clear-compare-btn" class="btn btn-secondary">Limpar tudo</button>
+                </div>
+
+                <section id="compare-result" class="compare-result hidden">
+                    <table class="compare-table">
+                        <thead>
+                            <tr>
+                                <th>Cidade</th>
+                                <th>Clima</th>
+                                <th>Temp</th>
+                                <th>Umidade</th>
+                                <th>Vento</th>
+                            </tr>
+                        </thead>
+                        <tbody id="compare-table-body">
+                            <!-- Linhas preenchidas via JS -->
+                        </tbody>
+                    </table>
+                </section>
+            </section>
         </main>
 
         <footer class="app-footer">
-            <footer class="app-footer">
-                <p>Dados meteorológicos fornecidos por <a href="https://open-meteo.com/" target="_blank"
-                        rel="noreferrer">Open-Meteo</a>.</p>
-                <p class="footer-author">
-                    Feito por <strong>Joel Ramalho Filho</strong> - 2026<br>
-                    Github: <a href="https://github.com/JoelRamalhoF" target="_blank"
-                        rel="noreferrer">github.com/JoelRamalhoF</a><br>
-                    Portfólio: <a href="https://joelramalhof.github.io/portfolio/" target="_blank"
-                        rel="noreferrer">joelramalhof.github.io/portfolio/</a>
-                </p>
-            </footer>
+            <p>Dados meteorológicos fornecidos por <a href="https://open-meteo.com/" target="_blank"
+                    rel="noreferrer">Open-Meteo</a>.</p>
+            <p class="footer-author">
+                Feito por <strong>Joel Ramalho Filho</strong> - 2026<br>
+                Github: <a href="https://github.com/JoelRamalhoF" target="_blank"
+                    rel="noreferrer">github.com/JoelRamalhoF</a><br>
+                Portfólio: <a href="https://joelramalhof.github.io/portfolio/" target="_blank"
+                    rel="noreferrer">joelramalhof.github.io/portfolio/</a>
+            </p>
         </footer>
     </div>
 
