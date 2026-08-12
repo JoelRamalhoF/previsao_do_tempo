@@ -70,8 +70,13 @@ const TRANSLATIONS = {
         'welcome.title': 'Bem-vindo!',
         'welcome.message':
             'Obrigado por visitar este projeto de previsão do tempo. Explore a previsão, compare cidades e, se quiser me conhecer melhor, acesse meu portfólio para ver outros projetos.',
-        'welcome.cta': 'Conheça meu portfólio'
+        'welcome.cta': 'Conheça meu portfólio', 
+
+        // Rodapé (Privacidade e Licença)
+        'footer.privacy': 'Esta aplicação não coleta, armazena ou compartilha dados pessoais. As buscas são processadas em tempo real e não são registradas.',
+        'footer.license': 'sob licença'
     },
+    
     'en': {
         'app.title': 'Weather Forecast',
         'app.subtitle': 'Current weather and 7-day forecast',
@@ -123,7 +128,9 @@ const TRANSLATIONS = {
         'welcome.title': 'Welcome!',
         'welcome.message':
             'Thanks for visiting this weather forecast project. Explore the forecast, compare cities, and if you want to know more about me, visit my portfolio to see other projects.',
-        'welcome.cta': 'Visit my portfolio'
+        'welcome.cta': 'Visit my portfolio', 
+        'footer.privacy': 'This application does not collect, store, or share personal data. Searches are processed in real-time and are not logged.',
+        'footer.license': 'under license'
     },
     'es': {
         'app.title': 'Previsión del Tiempo',
@@ -176,7 +183,9 @@ const TRANSLATIONS = {
         'welcome.title': '¡Bienvenido!',
         'welcome.message':
             'Gracias por visitar este proyecto de previsión del tiempo. Explora la previsión, compara ciudades y, si quieres conocerme mejor, visita mi portafolio para ver otros proyectos.',
-        'welcome.cta': 'Ver mi portafolio'
+        'welcome.cta': 'Ver mi portafolio', 
+        'footer.privacy': 'Esta aplicación no recopila, almacena ni comparte datos personales. Las búsquedas se procesan en tiempo real y no se registran.',
+        'footer.license': 'bajo licencia'
     },
     'it': {
         'app.title': 'Previsioni Meteo',
@@ -229,7 +238,9 @@ const TRANSLATIONS = {
         'welcome.title': 'Benvenuto!',
         'welcome.message':
             'Grazie per aver visitato questo progetto di previsioni meteo. Esplora le previsioni, confronta città e, se vuoi conoscermi meglio, visita il mio portfolio per vedere altri progetti.',
-        'welcome.cta': 'Visita il mio portfolio'
+        'welcome.cta': 'Visita il mio portfolio', 
+        'footer.privacy': 'Questa applicazione non raccoglie, memorizza o condivide dati personali. Le ricerche sono elaborate in tempo reale e non vengono registrate.',
+        'footer.license': 'sotto licenza'
     }
     // fr, de, ru, ja, ko, zh podem seguir mesma lógica depois, se você quiser completar.
 };

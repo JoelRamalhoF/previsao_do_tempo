@@ -246,10 +246,23 @@
         </main>
 
         <footer class="app-footer">
-            <p>
-                <span data-i18n="footer.data">Dados meteorológicos fornecidos por</span>
-                <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo</a>.
-            </p>
+            <!-- Novos alertas de Privacidade e Licenciamento -->
+
+            <div class="compliance-alerts"
+                style="margin-bottom: 16px; font-size: 11px; color: var(--text-secondary); line-height: 1.6;">
+                <p style="margin-bottom: 6px;">
+                    🔒 <span data-i18n="footer.privacy">Esta aplicação não coleta, armazena ou compartilha dados
+                        pessoais. As buscas são processadas em tempo real e não são registradas.</span>
+                </p>
+                <p>
+                    📊 <span data-i18n="footer.data">Dados meteorológicos fornecidos por</span> 
+                    <a href="https://open-meteo.com/" target="_blank" rel="noreferrer" style="color: var(--accent); font-weight: 600;">Open-Meteo.com</a> 
+                    <span data-i18n="footer.license">sob licença</span> 
+                    <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer" style="color: var(--accent); font-weight: 600;">CC BY 4.0</a>
+                </p>
+            </div>
+
+            <!-- Seus créditos originais mantidos intactos -->
             <p class="footer-author">
                 <span data-i18n="footer.madeBy">Feito por</span>
                 <strong>Joel Ramalho Filho</strong> - 2026<br>

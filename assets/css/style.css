@@ -736,12 +736,16 @@ body.theme-night .lang-btn:hover {
 
 .compare-result {
     margin-top: 10px;
+    overflow-x: auto; /* Cria a rolagem horizontal no celular */
+    -webkit-overflow-scrolling: touch; /* Deixa a rolagem suave no iPhone/iOS */
+    padding-bottom: 5px; /* Evita que a barra de rolagem engula a última linha */
 }
 
 .compare-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 13px;
+    min-width: 480px; /* Impede a tabela de espremer o texto, forçando a rolagem */
 }
 
 .compare-table th,
